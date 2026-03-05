@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Badge, Button } from "flowbite-svelte"
   import { t } from "../../i18n"
   import { SCHOOL_MONTHS, getCategoryColor, type usePlanner } from "./plannerState.svelte"
 
@@ -11,17 +12,17 @@
     {@const hasPrograms = monthPrograms.length > 0}
     <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 group/month">
       <!-- Hlavicka mesice -->
-      <div class="bg-[#35404F] px-4 py-3 flex items-center justify-between">
+      <div class="bg-[#2D384B] px-4 py-3 flex items-center justify-between">
         <h3 class="text-base font-bold text-white font-heading">{month.name}</h3>
         {#if hasPrograms}
-          <span class="bg-white/15 text-white/90 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+          <Badge rounded class="bg-[#F5A623]! text-white/90! text-[11px]! font-bold!">
             {monthPrograms.length} {monthPrograms.length === 1 ? "akce" : monthPrograms.length < 5 ? "akce" : "akci"}
-          </span>
+          </Badge>
         {/if}
       </div>
 
       <!-- Obsah mesice -->
-      <div class="px-4 pb-3 pt-3 min-h-[90px]">
+      <div class="px-4 pb-3 pt-3 min-h-22.5">
         {#if hasPrograms}
           <div class="space-y-1.5">
             {#each monthPrograms as program}
@@ -47,13 +48,16 @@
 
         <!-- Pridat program -->
         <div class:mt-2={hasPrograms} class:mt-0={!hasPrograms}>
-          <button
+          <Button
+            outline
+            color="light"
+            size="xs"
             onclick={() => planner.openModal(`__month__${month.index}`)}
-            class="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-border-light text-text-muted/60 text-xs font-medium hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all"
+            class="w-full! border-dashed! border-border-light! text-text-muted/60! hover:text-primary! hover:border-primary/40! hover:bg-primary/5! rounded-lg!"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="me-1.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
             {t.planner.calendar.addProgram}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

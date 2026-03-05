@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@plugin "../../node_modules/flowbite/plugin";
+@source "../../node_modules/flowbite-svelte/dist";
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   /* Typografie — --font-* generuje utility tridy font-heading, font-body */
@@ -10,6 +13,18 @@
   --color-primary: #F5A623;
   --color-primary-hover: #FFD166;
   --color-primary-dark: #D4901F;
+
+  /* Primary skala pro Flowbite komponenty (bg-primary-700 = hlavni barva buttonu) */
+  --color-primary-50: #FFF8EB;
+  --color-primary-100: #FEECC7;
+  --color-primary-200: #FDD889;
+  --color-primary-300: #FCC44B;
+  --color-primary-400: #FBB423;
+  --color-primary-500: #F5A623;
+  --color-primary-600: #F5A623;
+  --color-primary-700: #F5A623;
+  --color-primary-800: #D98E1B;
+  --color-primary-900: #B57216;
 
   /* Pozadi */
   --color-bg-primary: #0D1B2E;
@@ -38,6 +53,18 @@
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Fade-up animace pro sekce */
+.fade-up {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 body {

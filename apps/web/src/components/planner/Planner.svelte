@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Button } from "flowbite-svelte"
   import { t } from "../../i18n"
   import { usePlanner } from "./plannerState.svelte"
   import Sidebar from "./Sidebar.svelte"
@@ -13,7 +14,7 @@
 
 <div class="min-h-screen bg-[#F0EDE8]">
   <!-- Horni lista - navy gradient -->
-  <div class="bg-gradient-to-r from-bg-primary to-bg-secondary sticky top-[68px] z-30 shadow-lg">
+  <div class="bg-linear-to-r from-bg-primary to-bg-secondary sticky top-17 z-30 shadow-lg">
     <div class="w-full px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
       <div>
         <div class="flex items-center gap-3">
@@ -33,16 +34,16 @@
             <span class="text-xs text-text-secondary leading-tight">{t.planner.programsSelected}</span>
           </div>
         {/if}
-        <button
+        <Button
+          color="primary"
+          size="sm"
           onclick={() => inquiryOpen = true}
-          class="bg-primary hover:bg-primary-hover text-bg-primary px-5 py-2.5 rounded-xl font-bold text-sm transition-all inline-flex items-center gap-2 shadow-md hover:shadow-lg hover:scale-[1.02]"
           disabled={planner.totalAssignments === 0}
-          class:opacity-40={planner.totalAssignments === 0}
-          class:cursor-not-allowed={planner.totalAssignments === 0}
+          class="rounded-xl! shadow-md hover:shadow-lg! hover:scale-[1.02]! inline-flex items-center gap-2 {planner.totalAssignments === 0 ? 'opacity-40! cursor-not-allowed!' : ''}"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
-          {t.planner.submitInquiry}
-        </button>
+          <span class="hidden sm:inline">{t.planner.submitInquiry}</span>
+        </Button>
       </div>
     </div>
   </div>
@@ -50,16 +51,16 @@
   <!-- Hlavni obsah: sidebar + kalendar -->
   <div class="w-full flex flex-col lg:flex-row">
     <!-- Sidebar -->
-    <aside class="w-full lg:w-[380px] lg:shrink-0 bg-white border-r border-black/[0.06] lg:sticky lg:top-[136px] lg:h-[calc(100vh-136px)] overflow-y-auto shadow-sm">
+    <aside class="w-full lg:w-95 lg:shrink-0 bg-white border-r border-black/6 lg:sticky lg:top-34 lg:h-[calc(100vh-136px)] overflow-y-auto shadow-sm">
       <Sidebar {planner} />
     </aside>
 
     <!-- Kalendar -->
     <div class="flex-1 p-4 sm:p-6 lg:p-8 pb-28">
       <div class="mb-6 flex items-center gap-3">
-        <div class="h-px flex-1 bg-gradient-to-r from-primary/40 to-transparent"></div>
+        <div class="h-px flex-1 bg-linear-to-r from-primary/40 to-transparent"></div>
         <span class="text-[11px] font-bold uppercase tracking-[0.2em] text-text-muted/70 bg-[#F0EDE8] px-3">{t.planner.schoolYear}</span>
-        <div class="h-px flex-1 bg-gradient-to-l from-primary/40 to-transparent"></div>
+        <div class="h-px flex-1 bg-linear-to-l from-primary/40 to-transparent"></div>
       </div>
       <CalendarGrid {planner} />
     </div>

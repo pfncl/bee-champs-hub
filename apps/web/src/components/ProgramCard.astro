@@ -12,47 +12,57 @@ interface Props {
 const { program, color, categoryLabel } = Astro.props;
 ---
 
-<div class="bg-white rounded-2xl p-6 shadow-xl shadow-black/5 border border-border-light flex flex-col h-full hover:shadow-2xl hover:border-border-light/80 transition-all duration-300">
-  <!-- Hlavička: ikona + badge -->
-  <div class="flex justify-between items-start mb-4">
-    <div class="text-4xl">{program.icon}</div>
-    <div
-      class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
-      style={`background-color: ${color}15; color: ${color};`}
-    >
-      {categoryLabel}
-    </div>
+<div class="bg-white rounded-2xl shadow-xl shadow-black/5 border border-black/6 flex flex-col h-full hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 overflow-hidden">
+  <!-- Horni cast s barevnym pozadim a ikonou -->
+  <div
+    class="h-24 flex items-center justify-center text-5xl"
+    style={`background: linear-gradient(135deg, ${color}20, ${color}10);`}
+  >
+    {program.icon}
   </div>
 
-  <!-- Název -->
-  <h3 class="text-xl font-bold font-heading text-text-dark mb-2">
-    {program.name}
-  </h3>
+  <!-- Obsah karty -->
+  <div class="p-6 flex flex-col grow">
+    <!-- Badge kategorie -->
+    <div class="mb-3">
+      <span
+        class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
+        style={`background-color: ${color}15; color: ${color};`}
+      >
+        {categoryLabel}
+      </span>
+    </div>
 
-  <!-- Popis -->
-  <p class="text-text-muted text-sm mb-6 flex-grow">
-    {program.description}
-  </p>
+    <!-- Nazev -->
+    <h3 class="text-xl font-bold font-heading text-text-dark mb-2">
+      {program.name}
+    </h3>
 
-  <!-- Metadata -->
-  <div class="space-y-2 mb-6 pt-4 border-t border-border-light/40">
-    <div class="flex items-center text-sm text-text-muted">
-      <GraduationCap class="w-4 h-4 mr-3 text-text-muted/60" />
-      <span class="font-medium">Věk:</span>
-      <span class="ml-1">{program.ageRange}</span>
+    <!-- Popis -->
+    <p class="text-text-muted text-sm mb-6 grow">
+      {program.description}
+    </p>
+
+    <!-- Metadata -->
+    <div class="space-y-2 mb-6 pt-4 border-t border-black/6">
+      <div class="flex items-center text-sm text-text-muted">
+        <GraduationCap class="w-4 h-4 mr-3 text-text-muted/60" />
+        <span class="font-medium">Věk:</span>
+        <span class="ml-1">{program.ageRange}</span>
+      </div>
+      <div class="flex items-center text-sm text-text-muted">
+        <Clock class="w-4 h-4 mr-3 text-text-muted/60" />
+        <span class="font-medium">Délka:</span>
+        <span class="ml-1">{program.duration}</span>
+      </div>
+      <div class="flex items-center text-sm text-text-muted">
+        <Users class="w-4 h-4 mr-3 text-text-muted/60" />
+        <span class="font-medium">Lektoři:</span>
+        <span class="ml-1">{program.instructors}</span>
+      </div>
     </div>
-    <div class="flex items-center text-sm text-text-muted">
-      <Clock class="w-4 h-4 mr-3 text-text-muted/60" />
-      <span class="font-medium">Délka:</span>
-      <span class="ml-1">{program.duration}</span>
-    </div>
-    <div class="flex items-center text-sm text-text-muted">
-      <Users class="w-4 h-4 mr-3 text-text-muted/60" />
-      <span class="font-medium">Lektoři:</span>
-      <span class="ml-1">{program.instructors}</span>
-    </div>
+
+    <!-- Pridat do planovace -->
+    <AddToPlannerButton programId={program.id} color={color} client:load />
   </div>
-
-  <!-- Přidat do plánovače -->
-  <AddToPlannerButton programId={program.id} color={color} client:load />
 </div>

@@ -14,7 +14,9 @@ export class InquiryRequest extends Schema.Class<InquiryRequest>("InquiryRequest
   // Kontakt
   contactName: Schema.NonEmptyString,
   contactPhone: Schema.NonEmptyString,
-  contactEmail: Schema.NonEmptyString,
+  contactEmail: Schema.NonEmptyString.pipe(
+    Schema.filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) || "Neplatný e-mail")
+  ),
 
   // Volitelne
   contactPosition: Schema.optional(Schema.String),

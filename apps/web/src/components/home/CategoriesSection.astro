@@ -1,18 +1,24 @@
 ---
-import { categories } from '@bee-champs/shared';
+import type { Category } from '@bee-champs/shared';
 import { ArrowRight, Dumbbell, BookOpen, CalendarDays, Tent } from '@lucide/astro';
 
-const categoryIcons = {
+interface Props {
+  categories: Category[];
+}
+
+const { categories } = Astro.props;
+
+const categoryIcons: Record<string, typeof Dumbbell> = {
   sport: Dumbbell,
   vzdelavani: BookOpen,
   'projektove-dny': CalendarDays,
   akce: Tent,
-} as const;
+};
 ---
 
 <section id="kategorie" class="bg-bg-warm py-20">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-12">
+    <div class="text-center mb-12 fade-up">
       <span class="text-primary font-semibold text-sm uppercase tracking-wider">Co nabízíme</span>
       <h2 class="text-3xl md:text-4xl font-bold text-text-dark mt-2 mb-4 font-heading">
         Čtyři kategorie, jeden systém
@@ -22,7 +28,7 @@ const categoryIcons = {
       </p>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 fade-up">
       {categories.map((cat) => {
         const Icon = categoryIcons[cat.slug];
         return (

@@ -1,34 +1,67 @@
-# Predavaci protokol — Session 2026-03-05
+# Predavaci protokol — Session 2026-03-05 (aktualizace #4 — FINALNI)
 
-## Co bylo udelano
+## Co bylo udelano v teto session
 
-### Sprint 0-1 (predchozi session)
-- Inicializace pnpm monorepa se 4 workspace packages
-- Astro 5 + Svelte 5 + Tailwind v4 + Cloudflare adapter
-- Hono API s Effect TS
-- Drizzle ORM schema (inquiries tabulka)
-- Layout, Header (fixni navbar, mobilni menu), Footer
-- Barevna paleta, fonty Syne + DM Sans
+### 1. Flowbite-Svelte integrace s Tailwind v4
+- **Opraven `global.css`** — pridano `@plugin`, `@source`, `@custom-variant dark`
+- **Nainstalovano `flowbite: 4.0.1`** — nutne pro `@plugin` (flowbite-svelte samotne nestaci)
+- **Primary color skala** (50-900) pridana do `@theme` — Flowbite Button pouziva `bg-primary-700` atd.
+- **Dark mode**: `@custom-variant dark (&:where(.dark, .dark *))` prepina na class-based
 
-### Sprint 2: Homepage (tato session)
-- HeroSection — dvousloupcovy layout (text + obrazek s plovouci kartickou)
-- CategoriesSection — 4 sloupce, Lucide ikony (Dumbbell, BookOpen, CalendarDays, Tent)
-- HowItWorksSection — 4 kroky s Lucide ikonami
-- TestimonialsSection — 3 recenze
-- CtaSection — CTA s hexagonem
-- Nahrazeni vsech RemixIcon za @lucide/astro
-- Odstraneni remixicon z dependencies
+### 2. InquiryModal.svelte — KOMPLETNE PREPSANO
+Puvodni stav: vizualne strasny modal s nativnimi HTML inputy.
+Novy stav: Flowbite Modal + Flowbite form komponenty, funkcni.
 
-### Sprint 3: Kategorie
-- `[category].astro` — dynamicka stranka (prerender + getStaticPaths)
-- `ProgramCard.astro` — karta programu s metadaty a tlacitkem "Pridat do planovace"
-- 4 stranky: /sport (8), /vzdelavani (7), /projektove-dny (5), /akce (6)
+**Pouzite Flowbite komponenty**: `Modal`, `Button`, `Label`, `Input`, `Select`, `Textarea`, `Helper`
 
-### Sprint 3.5: Cloudflare deploy
-- `apps/web/wrangler.jsonc` + `apps/api/wrangler.jsonc` (JSONC format jako baladeva)
-- D1 databaze `bee-champs-db` vytvorena (EEUR region)
-- Obe apps nasazeny na Cloudflare Workers
-- `.assetsignore` v public/ aby wrangler nenahravel _worker.js jako asset
+**Reseni problemu** (co nefungovalo a jak se to vyresilo):
+- `{#snippet footer()}` se nezobrazoval — **reseni**: Button primo v body obsahu (Flowbite "Form element" pattern)
+- Scroll u dlouheho formulare — **reseni**: `<div class="max-h-[60vh] overflow-y-auto">` obaluje pole, hlavicka a paticka MIMO
+- Dva krizky (X) — **reseni**: `dismissable={false}` + vlastni X button, bez `title` prop
+- Neviditelne tlacitko — **reseni**: `color="blue"` na Button + primary skala v @theme
+- Validace vzdy ukazovala chybu — **reseni**: `color={hasError(field) ? "red" : undefined}` (ne `"base"`)
+
+### 3. CLAUDE.md aktualizovan
+- Pridana sekce "Flowbite-Svelte MCP Server" s MCP workflow a nastroji
+- Pridana sekce "Tailwind v4 setup pro Flowbite"
+
+### 4. Migracni plan pro Flowbite
+- Vytvoreno `docs/FLOWBITE_MIGRATION.md` — detailni plan prevodu vsech komponent na Flowbite
+
+## Aktualni stav souboru
+
+### Planovac (apps/web/src/components/planner/)
+| Soubor | Stav | Poznamka |
+|--------|------|----------|
+| plannerState.svelte.ts | OK | Plne funkcni, runes + localStorage |
+| Planner.svelte | Custom HTML | 1x button k prevodu na Flowbite |
+| Sidebar.svelte | Custom HTML | Search input, filtry k prevodu |
+| CalendarGrid.svelte | Custom HTML | Karty, buttony, badge k prevodu |
+| MonthAssignModal.svelte | Custom HTML | Cely modal k prevodu na Flowbite |
+| SummaryBar.svelte | Custom HTML | Chipy, buttony k prevodu |
+| PlannerBadge.svelte | Custom HTML | Badge k prevodu |
+| AddToPlannerButton.svelte | Custom HTML | Button k prevodu |
+| InquiryModal.svelte | **FLOWBITE** | Hotovo — Modal + form komponenty |
+
+### Zmenene soubory v teto session:
+- `apps/web/src/styles/global.css` — @plugin, @source, @custom-variant, primary skala
+- `apps/web/package.json` — pridano `flowbite: 4.0.1`
+- `apps/web/src/components/planner/InquiryModal.svelte` — kompletne prepsano na Flowbite
+- `CLAUDE.md` — Flowbite MCP sekce
+- `docs/FLOWBITE_MIGRATION.md` — migracni plan (NOVE)
+
+### API (apps/api/) — beze zmen
+| Soubor | Stav |
+|--------|------|
+| src/index.ts | OK — POST /inquiries endpoint |
+| src/runtime.ts | OK — makeHonoRuntime wrapper |
+| src/inquiry/route.ts | OK — handleCreateInquiry |
+| src/inquiry/repository.ts | OK — InquiryRepository + Live |
+| src/inquiry/schema.ts | OK — InquiryRequest Schema.Class |
+
+### i18n
+- `apps/web/src/i18n/cs.json` — obsahuje `inquiry` sekci se vsemi labely
+- `apps/web/src/i18n/index.ts` — `export const t = cs`
 
 ## Deploy informace
 - **Web**: https://bee-champs-hub-web.webmaster4329.workers.dev/
@@ -45,54 +78,22 @@ pnpm --filter @bee-champs/web build && cd apps/web && npx wrangler deploy
 cd apps/api && npx wrangler deploy
 ```
 
-## Co je dalsi (Sprint 4)
-**Rocni planovac** — nejslozitejsi cast projektu:
-- Svelte 5 interaktivni komponenta na `/planovac`
-- Levy sidebar (340px): seznam programu, filtrace, checkboxy
-- Pravy panel: grid 3 sloupce, 12 mesicu (zari-srpen)
-- Modal pro prirazeni programu k mesicum
-- Stav pres Svelte 5 runes ($state, $derived)
-- Viz `docs/SPRINTY.md` Sprint 4 pro kompletni specifikaci
+## Uzivateluv feedback ke stylu
+- **NECHCE gradienty** — jednobarevne plochy, cisty Flowbite look
+- **Flowbite styl** — pouzivat Flowbite komponenty jak jsou, nesnazit se je "vylepsovat"
+- **Celkovy pristup** — cistejsi, mene "predesignovany"
 
-## Struktura souboru (klicove)
-```
-apps/
-  web/
-    wrangler.jsonc              # CF Workers config
-    public/
-      .assetsignore             # _worker.js ignorovat
-      images/hero.avif          # Hero obrazek
-    src/
-      layouts/Layout.astro      # Hlavni layout
-      components/
-        Header.astro            # Navbar s hexagon logem
-        Footer.astro            # 4-sloupcovy footer
-        ProgramCard.astro       # Karta programu
-        home/
-          HeroSection.astro     # 2-col hero s obrazkem
-          CategoriesSection.astro  # 4 kategorie, Lucide ikony
-          HowItWorksSection.astro  # 4 kroky
-          TestimonialsSection.astro # Recenze
-          CtaSection.astro      # CTA
-      pages/
-        index.astro             # Homepage
-        [category].astro        # Detail kategorie (prerender)
-      styles/global.css         # Tailwind v4 @theme
-      data/siteData.ts          # Nav links, metadata
-  api/
-    wrangler.jsonc              # CF Workers config
-    src/index.ts                # Hono app (/health)
-packages/
-  shared/src/
-    categories.ts               # 4 kategorie + typy
-    programs.ts                 # 26 programu
-  db/src/schema/index.ts        # inquiries tabulka (Drizzle)
-docs/
-  SPRINTY.md                    # Sprint planovani s checklisty
-```
+## Dalsi kroky
+- [x] InquiryModal — prepsano na Flowbite
+- [ ] **Prevest ostatni komponenty na Flowbite** — viz `docs/FLOWBITE_MIGRATION.md`
+  - Jednoduche: PlannerBadge, SummaryBar buttony, Planner button, AddToPlannerButton
+  - Stredni: Sidebar (search, filtry), CalendarGrid (karty, buttony)
+  - Slozite: MonthAssignModal (cely custom modal)
+- [ ] Sprint 6: View Transitions + SPA navigace
+- [ ] Sprint 7: Deploy + SEO
 
-## Zname problemy a TODO
-- [ ] ESLint konfigurace jeste neni nastavena
-- [ ] Astro hlasi KV SESSION binding warning — neni kriticke, ale pro sessions bude treba vytvorit KV namespace
-- [ ] Tailwind ~4.1.18 pinned kvuli Vite 7 peer dep konfliktu (kosmeticky warning)
-- [ ] Hero obrazek je z Unsplash — nahradit vlastnim
+## Zname problemy
+- [ ] Flowbite MCP server v `/tmp/` — pri restartu se smaze, bude treba znovu buildnout
+- [ ] ESLint konfigurace neni nastavena
+- [ ] Tailwind ~4.1.18 pinned kvuli Vite 7 konfliktu (kosmeticky warning)
+- [ ] Hero obrazek z Unsplash — nahradit vlastnim

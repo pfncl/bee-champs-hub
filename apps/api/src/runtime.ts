@@ -6,10 +6,7 @@
  */
 import { Effect, Layer, ManagedRuntime } from "effect"
 import type { Context } from "hono"
-
-type Env = {
-  readonly DB: D1Database
-}
+import type { Env } from "./types"
 
 type HonoContext = Context<{ readonly Bindings: Env }>
 

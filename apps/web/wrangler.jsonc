@@ -17,6 +17,11 @@
     "PUBLIC_API_URL": "https://api.beechampshub.cz"
   },
 
+    // Custom domain
+  "routes": [
+    { "pattern": "bee.pefen.dev", "custom_domain": true }
+  ],
+
   // D1 pro poptávky
   "d1_databases": [
     {

@@ -60,6 +60,37 @@ bee-champs/
 - Fonty: Syne (nadpisy), DM Sans (telo textu)
 - Tmave pozadi + zlate akcenty, profesionalni B2B ton
 
+## Flowbite-Svelte MCP Server
+
+Mas k dispozici Flowbite-Svelte MCP server s dokumentaci. **VZDY** ho pouzivej pri praci s Flowbite komponentami.
+
+### Dostupne MCP nastroje:
+
+1. **findComponent** — Pouzij PRVNI pro nalezeni komponenty podle jmena. Vraci cestu k dokumentaci.
+2. **getComponentList** — Seznam vsech dostupnych komponent s kategoriemi.
+3. **getComponentDoc** — Kompletni dokumentace komponenty vcetne prikladu, props a best practices. Pouzij PO findComponent.
+4. **searchDocs** — Fulltextove vyhledavani v cele dokumentaci. Pouzij kdyz hledas vzory nebo funkce napric komponentami.
+
+### Povinny workflow pri praci s Flowbite-Svelte:
+
+1. `findComponent` — najdi komponentu
+2. `getComponentDoc` — precti CELOU dokumentaci vcetne prikladu
+3. Pis kod **presne podle dokumentace** — ne z pameti!
+4. Dodrzuj patterny z docs (napr. `Label class="space-y-2"` obaluje `<span>` + `<Input>`)
+
+### Tailwind v4 setup pro Flowbite:
+
+V `global.css` MUSI byt:
+```css
+@import "tailwindcss";
+@plugin "../../node_modules/flowbite/plugin";
+@source "../../node_modules/flowbite-svelte/dist";
+```
+
+Cesty jsou relativni od `apps/web/src/styles/global.css` k `apps/web/node_modules/` (pnpm workspaces).
+
+Bez `@plugin` a `@source` Flowbite komponenty NEBUDOU mit styly (zadne bordery, pozadi atd.).
+
 ## Dulezite soubory
 - `docs/SPRINTY.md` — rozplanovane sprinty podle kapitol zadani
 - `README.md` — kompletni zadani webu (specifikace)

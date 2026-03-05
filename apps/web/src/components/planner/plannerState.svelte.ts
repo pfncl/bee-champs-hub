@@ -5,8 +5,41 @@
  * Persistence přes localStorage.
  */
 
-import { categories, programs, type CategorySlug, type Program } from "@bee-champs/shared"
+import type { CategorySlug, Program, Category } from "@bee-champs/shared"
+import { API_BASE } from "../../lib/api"
 import { t } from "../../i18n"
+
+// === Data z API (nacteni pri inicializaci) ===
+// Pouzivame plain JS promennou (ne $state) aby View Transitions neresetovaly stav
+
+let categories = $state<Category[]>([])
+let programs = $state<Program[]>([])
+let dataLoaded = $state(false)
+let loadPromise: Promise<void> | null = null
+
+function loadDataFromAPI() {
+  if (loadPromise) return loadPromise
+  loadPromise = (async () => {
+    try {
+      const [catRes, progRes] = await Promise.all([
+        fetch(`${API_BASE}/api/categories`),
+        fetch(`${API_BASE}/api/programs`),
+      ])
+      if (catRes.ok) {
+        const catJson = await catRes.json() as { data: Category[] }
+        categories = catJson.data
+      }
+      if (progRes.ok) {
+        const progJson = await progRes.json() as { data: Program[] }
+        programs = progJson.data
+      }
+    } catch {
+      // Fallback — data zustane prazdna
+    }
+    dataLoaded = true
+  })()
+  return loadPromise
+}
 
 // === Typy ===
 
@@ -112,8 +145,8 @@ const filteredPrograms = $derived.by(() => {
     filtered = filtered.filter((p) => p.category === activeCategory)
   }
 
-  if (searchQuery.trim()) {
-    const query = searchQuery.trim().toLowerCase()
+  if (String(searchQuery ?? "").trim()) {
+    const query = String(searchQuery ?? "").trim().toLowerCase()
     filtered = filtered.filter(
       (p) => p.name.toLowerCase().includes(query) || p.description.toLowerCase().includes(query)
     )
@@ -200,11 +233,10 @@ function openModal(programId: string) {
 
 function closeModal() {
   modalOpen = false
-  modalProgramId = null
 }
 
 function setSearchQuery(query: string) {
-  searchQuery = query
+  searchQuery = String(query ?? "")
 }
 
 function setActiveCategory(category: CategorySlug | "all") {
@@ -219,6 +251,13 @@ function reloadFromStorage() {
 // === Export ===
 
 export function usePlanner() {
+  // Nacti data z API pri prvnim pouziti
+  $effect(() => {
+    if (!dataLoaded) {
+      loadDataFromAPI()
+    }
+  })
+
   // Poslouchej custom events (pro cross-island komunikaci)
   $effect(() => {
     function handleOpenModal(e: Event) {
@@ -248,6 +287,9 @@ export function usePlanner() {
     get activeCategory() { return activeCategory },
     get modalOpen() { return modalOpen },
     get modalProgramId() { return modalProgramId },
+    get dataLoaded() { return dataLoaded },
+    get categories() { return categories },
+    get programs() { return programs },
 
     // Derived
     get filteredPrograms() { return filteredPrograms },

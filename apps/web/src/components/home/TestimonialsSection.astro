@@ -1,38 +1,23 @@
 ---
 import { Star } from '@lucide/astro';
 
-const testimonials = [
-  {
-    text: "Díky Bee Champs jsme naplánovali celý rok za jedno odpoledne. Dříve to trvalo týdny vyjednávání s různými dodavateli.",
-    name: "Mgr. Jana Nováková",
-    role: "Ředitelka ZŠ Květinová",
-    initials: "JN",
-  },
-  {
-    text: "Skvělá platforma! Vybrali jsme 8 programů najednou a vše proběhlo bezchybně. Lektoři byli profesionální a děti nadšené.",
-    name: "Mgr. Petr Dvořák",
-    role: "Zástupce ředitele ZŠ Lužická",
-    initials: "PD",
-  },
-  {
-    text: "Konečně nemusíme řešit každou akci zvlášť. Jeden formulář, jeden kontakt, všechno vyřešené. Obrovská úspora času.",
-    name: "Bc. Markéta Svobodová",
-    role: "Učitelka MŠ Sluníčko",
-    initials: "MS",
-  },
-];
+interface Props {
+  testimonials: { id?: number; text: string; name: string; role: string; initials: string }[];
+}
+
+const { testimonials } = Astro.props;
 ---
 
 <section class="bg-white py-20">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-12">
+    <div class="text-center mb-12 fade-up">
       <span class="text-primary font-semibold text-sm uppercase tracking-wider">Reference</span>
       <h2 class="text-3xl md:text-4xl font-bold text-text-dark mt-2 mb-4 font-heading">
         Co říkají školy
       </h2>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 fade-up">
       {testimonials.map((t) => (
         <div class="bg-bg-warm rounded-xl p-6 border border-border-light">
           <!-- Uvozovka -->

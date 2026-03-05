@@ -27,7 +27,10 @@
     ]
   },
   "devDependencies": {
+    "@codeforbreakfast/eslint-effect": "^0.8.5",
+    "@eslint/compat": "^2.0.2",
     "eslint": "^10.0.0",
+    "eslint-plugin-functional": "^9.0.4",
     "tsx": "^4.21.0",
     "typescript-eslint": "^8.55.0"
   }

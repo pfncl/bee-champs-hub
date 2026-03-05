@@ -2,27 +2,25 @@
 import Layout from '../layouts/Layout.astro';
 import ProgramCard from '../components/ProgramCard.astro';
 import { ArrowLeft, CalendarRange } from '@lucide/astro';
-import { categories, programs } from '@bee-champs/shared';
+import type { Category, Program } from '@bee-champs/shared';
+import { apiFetchSSR } from '../lib/api-server';
 import { t } from '@i18n';
-import type { GetStaticPaths } from 'astro';
 
-export const prerender = true;
+const slug = Astro.params.category;
+const allCategories = await apiFetchSSR<Category[]>("/api/categories");
+const category = allCategories.find((c) => c.slug === slug);
 
-export const getStaticPaths = (() => {
-  return categories.map((cat) => ({
-    params: { category: cat.slug },
-    props: { category: cat },
-  }));
-}) satisfies GetStaticPaths;
+if (!category) {
+  return Astro.redirect("/404");
+}
 
-const { category } = Astro.props;
-const categoryPrograms = programs.filter((p) => p.category === category.slug);
+const categoryPrograms = await apiFetchSSR<Program[]>(`/api/programs/${slug}`);
 ---
 
 <Layout title={`${category.name} | Bee Champs Hub`} description={category.description}>
-  <section class="bg-bg-primary pt-[68px]">
+  <section class="bg-bg-tertiary pt-17">
     <!-- Hero kategorie -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <a
         href="/#kategorie"
         class="inline-flex items-center gap-2 text-text-secondary hover:text-white transition-colors mb-8 text-sm"
@@ -67,7 +65,7 @@ const categoryPrograms = programs.filter((p) => p.category === category.slug);
         </h2>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 fade-up">
         {categoryPrograms.map((program) => (
           <ProgramCard program={program} color={category.color} categoryLabel={category.label} />
         ))}

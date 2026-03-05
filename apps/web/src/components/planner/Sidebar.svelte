@@ -1,19 +1,20 @@
 <script lang="ts">
-  import { categories, type CategorySlug } from "@bee-champs/shared"
+  import { Input } from "flowbite-svelte"
+  import type { CategorySlug } from "@bee-champs/shared"
   import { t } from "../../i18n"
   import { getCategoryColor, type usePlanner } from "./plannerState.svelte"
 
   let { planner }: { planner: ReturnType<typeof usePlanner> } = $props()
 
-  const categoryFilters: { slug: CategorySlug | "all"; label: string; color: string }[] = [
+  const categoryFilters = $derived<{ slug: CategorySlug | "all"; label: string; color: string }[]>([
     { slug: "all", label: t.planner.sidebar.filterAll, color: "var(--color-text-secondary)" },
-    ...categories.map((c) => ({ slug: c.slug as CategorySlug, label: c.label, color: c.color })),
-  ]
+    ...planner.categories.map((c) => ({ slug: c.slug as CategorySlug, label: c.label, color: c.color })),
+  ])
 
   /** Seskupeni filtrovanych programu podle kategorie */
   const groupedPrograms = $derived.by(() => {
     const groups: { slug: CategorySlug; name: string; color: string; programs: typeof planner.filteredPrograms }[] = []
-    for (const cat of categories) {
+    for (const cat of planner.categories) {
       const catPrograms = planner.filteredPrograms.filter((p) => p.category === cat.slug)
       if (catPrograms.length > 0) {
         groups.push({ slug: cat.slug, name: cat.name, color: cat.color, programs: catPrograms })
@@ -40,17 +41,19 @@
   </div>
 
   <!-- Vyhledavani -->
-  <div class="mb-4 relative">
-    <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-text-muted/50"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-    </div>
-    <input
+  <div class="mb-4">
+    <Input
       type="text"
       placeholder={t.planner.sidebar.searchPlaceholder}
       value={searchValue}
-      oninput={(e) => { searchValue = (e.currentTarget as HTMLInputElement).value; planner.setSearchQuery(searchValue) }}
-      class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border-light bg-white text-sm text-text-dark placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all"
-    />
+      oninput={(e: Event) => { searchValue = (e.currentTarget as HTMLInputElement).value; planner.setSearchQuery(searchValue) }}
+      size="sm"
+      class="rounded-xl! ps-9"
+    >
+      {#snippet left()}
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-text-muted/50"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      {/snippet}
+    </Input>
   </div>
 
   <!-- Filtrace kategorii -->
@@ -87,7 +90,7 @@
         </div>
 
         <!-- Programy -->
-        <div class="space-y-0.5">
+        <div class="space-y-1.5">
           {#each group.programs as program}
             {@const isAssigned = planner.isProgramAssigned(program.id)}
             {@const monthCount = planner.getProgramMonths(program.id).length}

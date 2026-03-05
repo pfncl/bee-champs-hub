@@ -1,1 +1,1 @@
-export { inquiries } from "./schema/index"
+export { inquiries, categories, programs, testimonials, settings } from "./schema/index"

@@ -1,0 +1,80 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { apiFetchSSR } from '../../lib/api-server';
+
+const cookie = Astro.request.headers.get("cookie");
+const token = cookie?.match(/admin_token=([^;]+)/)?.[1] ?? "";
+
+type Inquiry = { id: number; schoolName: string; city: string; createdAt: string }
+type Program = { id: number; slug: string; name: string; active: boolean }
+
+let inquiries: Inquiry[] = []
+let programs: Program[] = []
+let error = ""
+
+try {
+  const [inqResult, progResult] = await Promise.allSettled([
+    apiFetchSSR<Inquiry[]>("/admin/inquiries", `admin_token=${token}`),
+    apiFetchSSR<Program[]>("/admin/programs", `admin_token=${token}`),
+  ])
+  if (inqResult.status === "fulfilled") inquiries = inqResult.value
+  if (progResult.status === "fulfilled") programs = progResult.value
+} catch (e) {
+  error = String(e)
+}
+
+const recentInquiries = inquiries.slice(0, 5)
+const activePrograms = programs.filter(p => p.active).length
+---
+
+<AdminLayout title="Dashboard | Admin">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-text-dark font-heading">Dashboard</h1>
+    <p class="text-text-muted text-sm mt-1">Prehled administrace Bee Champs Hub</p>
+  </div>
+
+  {error && (
+    <div class="bg-cat-events/10 border border-cat-events/20 text-cat-events rounded-lg px-4 py-3 mb-6 text-sm">
+      {error}
+    </div>
+  )}
+
+  <!-- Statistiky -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+    <div class="bg-white rounded-xl p-5 border border-black/6">
+      <div class="text-3xl font-bold text-text-dark font-heading">{inquiries.length}</div>
+      <div class="text-text-muted text-sm">Poptávek celkem</div>
+    </div>
+    <div class="bg-white rounded-xl p-5 border border-black/6">
+      <div class="text-3xl font-bold text-text-dark font-heading">{activePrograms}</div>
+      <div class="text-text-muted text-sm">Aktivních programů</div>
+    </div>
+    <div class="bg-white rounded-xl p-5 border border-black/6">
+      <div class="text-3xl font-bold text-text-dark font-heading">{programs.length}</div>
+      <div class="text-text-muted text-sm">Programů celkem</div>
+    </div>
+  </div>
+
+  <!-- Posledni poptavky -->
+  <div class="bg-white rounded-xl border border-black/6 overflow-hidden">
+    <div class="px-5 py-4 border-b border-black/6 flex items-center justify-between">
+      <h2 class="font-bold text-text-dark font-heading">Poslední poptávky</h2>
+      <a href="/admin/poptavky" class="text-sm text-primary hover:text-primary-dark font-medium">Zobrazit vše &rarr;</a>
+    </div>
+    {recentInquiries.length === 0 ? (
+      <div class="px-5 py-8 text-center text-text-muted text-sm">Žádné poptávky</div>
+    ) : (
+      <div class="divide-y divide-black/6">
+        {recentInquiries.map((inq) => (
+          <a href={`/admin/poptavky?detail=${inq.id}`} class="flex items-center justify-between px-5 py-3 hover:bg-bg-warm/50 transition-colors">
+            <div>
+              <span class="font-medium text-text-dark text-sm">{inq.schoolName}</span>
+              <span class="text-text-muted text-xs ml-2">{inq.city}</span>
+            </div>
+            <span class="text-text-muted text-xs">{new Date(inq.createdAt).toLocaleDateString("cs")}</span>
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+</AdminLayout>
