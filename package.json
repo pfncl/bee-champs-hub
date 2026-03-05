@@ -1,0 +1,34 @@
+{
+  "name": "bee-champs-hub",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @bee-champs/api dev & pnpm --filter @bee-champs/web dev",
+    "dev:web": "pnpm --filter @bee-champs/web dev",
+    "dev:api": "pnpm --filter @bee-champs/api dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "deploy:api": "pnpm --filter @bee-champs/api run deploy",
+    "deploy:web": "pnpm --filter @bee-champs/web run build && pnpm --filter @bee-champs/web exec wrangler deploy",
+    "deploy": "pnpm deploy:api && pnpm deploy:web",
+    "db:generate": "pnpm --filter @bee-champs/db generate",
+    "typecheck": "tsc -p apps/api/tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "workerd"
+    ]
+  },
+  "devDependencies": {
+    "eslint": "^10.0.0",
+    "tsx": "^4.21.0",
+    "typescript-eslint": "^8.55.0"
+  }
+}

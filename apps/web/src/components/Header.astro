@@ -1,0 +1,86 @@
+---
+import { navigation } from '@data/siteData';
+import { CalendarRange, Menu, X } from '@lucide/astro';
+---
+
+<header class="fixed flex items-center justify-center w-full z-50 bg-bg-primary/97 backdrop-blur-sm border-b border-border-primary h-[68px]">
+  <nav class="max-w-7xl w-full px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between">
+      <!-- Logo -->
+      <a href="/" class="flex items-center gap-2 shrink-0">
+        <div class="bg-primary p-2 rounded-xl transition-transform duration-300">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-bg-primary fill-current"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+        </div>
+        <span class="text-xl font-bold font-heading text-white">
+          Bee Champs <span class="text-primary">Hub</span>
+        </span>
+      </a>
+
+      <!-- Desktop navigace -->
+      <div class="hidden md:flex md:items-center md:gap-8">
+        {navigation.map((item) => (
+          <a
+            href={item.href}
+            class="text-text-secondary hover:text-primary transition-colors font-medium text-base py-2"
+          >
+            {item.name}
+          </a>
+        ))}
+        <a
+          href="/planovac"
+          class="border-2 border-primary text-primary hover:bg-primary hover:text-bg-primary rounded-lg font-semibold transition-all duration-200 inline-flex items-center justify-center gap-2 px-5 py-2"
+        >
+          <CalendarRange class="w-4 h-4" />
+          Roční plánovač
+        </a>
+      </div>
+
+      <!-- Mobilní menu tlačítko -->
+      <div class="flex items-center gap-3 md:hidden">
+        <a
+          href="/planovac"
+          class="border-2 border-primary text-primary hover:bg-primary hover:text-bg-primary rounded-lg font-semibold transition-all duration-200 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm"
+        >
+          <CalendarRange class="w-4 h-4" />
+          Plánovač
+        </a>
+        <button
+          id="mobile-menu-button"
+          class="text-white p-2 flex items-center justify-center"
+          aria-label="Otevřít menu"
+        >
+          <Menu id="menu-icon" class="w-6 h-6" />
+          <X id="close-icon" class="w-6 h-6 hidden" />
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobilní navigace -->
+    <div
+      id="mobile-menu"
+      class="hidden md:hidden pb-6 pt-2 space-y-2"
+    >
+      {navigation.map((item) => (
+        <a
+          href={item.href}
+          class="block px-4 py-3 text-text-secondary hover:text-primary hover:bg-bg-tertiary rounded-lg transition-colors font-medium"
+        >
+          {item.name}
+        </a>
+      ))}
+    </div>
+  </nav>
+</header>
+
+<script>
+  const mobileMenuButton = document.getElementById('mobile-menu-button');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const menuIcon = document.getElementById('menu-icon');
+  const closeIcon = document.getElementById('close-icon');
+
+  mobileMenuButton?.addEventListener('click', () => {
+    mobileMenu?.classList.toggle('hidden');
+    menuIcon?.classList.toggle('hidden');
+    closeIcon?.classList.toggle('hidden');
+  });
+</script>

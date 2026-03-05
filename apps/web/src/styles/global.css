@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  /* Typografie — --font-* generuje utility tridy font-heading, font-body */
+  --font-heading: 'Syne', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --default-font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+
+  /* Primarni barvy */
+  --color-primary: #F5A623;
+  --color-primary-hover: #FFD166;
+  --color-primary-dark: #D4901F;
+
+  /* Pozadi */
+  --color-bg-primary: #0D1B2E;
+  --color-bg-secondary: #132238;
+  --color-bg-tertiary: #1A2D45;
+  --color-bg-card: #FFFFFF;
+  --color-bg-warm: #FDF9F3;
+
+  /* Text */
+  --color-text-primary: #FFFFFF;
+  --color-text-dark: #0D1B2E;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+
+  /* Kategorie */
+  --color-cat-sport: #F5A623;
+  --color-cat-education: #2ECC71;
+  --color-cat-projects: #3498DB;
+  --color-cat-events: #E74C3C;
+
+  /* Borders */
+  --color-border-primary: #1A2D45;
+  --color-border-light: #E2E8F0;
+  --color-border-accent: #F5A623;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  line-height: 1.6;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-hover);
+}

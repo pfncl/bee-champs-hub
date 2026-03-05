@@ -1,0 +1,57 @@
+---
+import { Users, Clock, GraduationCap, Plus } from '@lucide/astro';
+import type { Program } from '@bee-champs/shared';
+
+interface Props {
+  program: Program;
+  color: string;
+}
+
+const { program, color } = Astro.props;
+---
+
+<div class="bg-white rounded-xl p-6 border border-border-light hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group">
+  <!-- Ikona + název -->
+  <div class="flex items-start gap-3 mb-4">
+    <div
+      class="w-12 h-12 rounded-lg flex items-center justify-center text-2xl shrink-0"
+      style={`background-color: ${color}15;`}
+    >
+      {program.icon}
+    </div>
+    <div>
+      <h3 class="text-lg font-bold text-text-dark font-heading group-hover:text-primary transition-colors">
+        {program.name}
+      </h3>
+      <p class="text-text-muted text-sm mt-1">
+        {program.description}
+      </p>
+    </div>
+  </div>
+
+  <!-- Metadata -->
+  <div class="flex flex-wrap gap-3 text-xs text-text-muted">
+    <span class="inline-flex items-center gap-1">
+      <GraduationCap class="w-3.5 h-3.5" />
+      {program.ageRange}
+    </span>
+    <span class="inline-flex items-center gap-1">
+      <Clock class="w-3.5 h-3.5" />
+      {program.duration}
+    </span>
+    <span class="inline-flex items-center gap-1">
+      <Users class="w-3.5 h-3.5" />
+      {program.instructors} lekt.
+    </span>
+  </div>
+
+  <!-- Přidat do plánovače -->
+  <button
+    class="mt-4 w-full py-2.5 rounded-lg border-2 border-dashed font-semibold text-sm transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
+    style={`border-color: ${color}40; color: ${color};`}
+    data-program-id={program.id}
+  >
+    <Plus class="w-4 h-4" />
+    Přidat do plánovače
+  </button>
+</div>
