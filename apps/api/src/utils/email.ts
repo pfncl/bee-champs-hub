@@ -49,8 +49,10 @@ export const sendEmail = (params: {
       catch: (cause) => new EmailSendError({ message: "Parsovani selhalo", cause }),
     })
 
+    const decodeResend = Schema.decodeUnknown(ResendResponse)
+    const decoded = decodeResend(json)
     const result = yield* Effect.mapError(
-      Schema.decodeUnknown(ResendResponse)(json),
+      decoded,
       () => new EmailSendError({ message: "Neplatna odpoved z Resend" }),
     )
 

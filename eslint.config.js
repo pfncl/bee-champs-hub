@@ -59,11 +59,15 @@ export default [
       // Generators allowed (Effect.gen pattern)
       'effect/no-gen': 'off',
 
-      // Logic: prefer Match over switch
+      // Logic: prefer Match over switch, ternary warn (ne error — jednoduche boolean checky)
       'effect/no-switch-statement': 'error',
+      'effect/prefer-match-over-ternary': 'warn',
 
       // CF Workers pouzivaji nativni fetch — neni potreba @effect/platform
       'effect/prefer-effect-platform': 'off',
+
+      // Eta-expansion: false positives na Response.text()/json() ktere vyzaduji this binding
+      'effect/no-eta-expansion': 'warn',
 
       // Best Practices
       'effect/prefer-andThen': 'warn',
@@ -83,6 +87,15 @@ export default [
     files: ['apps/api/src/runtime.ts'],
     rules: {
       'effect/no-runPromise': 'off',
+    },
+  },
+
+  // ── DB schema: Drizzle, ne Effect kod ────────────────────────────
+  {
+    name: 'bee-champs/db-schema',
+    files: ['packages/db/src/schema/**/*.ts'],
+    rules: {
+      'effect/no-eta-expansion': 'off',
     },
   },
 

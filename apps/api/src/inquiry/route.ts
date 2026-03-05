@@ -1,31 +1,32 @@
 /**
  * POST /inquiries — prijme poptavku, ulozi do D1, posle email notifikaci
  */
-import { Effect, Schema } from "effect"
+import { Effect, Schema, pipe } from "effect"
 import type { Context } from "hono"
 import type { Env } from "../types"
 import { InquiryRequest } from "./schema"
 import { InquiryRepository } from "./repository"
 import { sendInquiryNotification } from "../utils/email"
+import { DatabaseError, ValidationError } from "../errors"
 import { drizzle } from "drizzle-orm/d1"
 import { settings } from "@bee-champs/db"
 import { eq } from "drizzle-orm"
 
 type HonoContext = Context<{ readonly Bindings: Env }>
 
-export const handleCreateInquiry = (c: HonoContext): Effect.Effect<Response, never, InquiryRepository> =>
+export const handleCreateInquiry = (c: HonoContext) =>
   Effect.gen(function* () {
     // Parsuj a validuj request body
     const body = yield* Effect.tryPromise({
       try: () => c.req.json(),
-      catch: () => ({ type: "parse" as const, detail: "Neplatný JSON" }),
+      catch: () => new ValidationError({ message: "Neplatny JSON" }),
     })
 
-    const decoded = yield* Schema.decodeUnknown(InquiryRequest)(body).pipe(
-      Effect.mapError((parseError) => ({
-        type: "validation" as const,
-        detail: String(parseError),
-      }))
+    const decodeInquiry = Schema.decodeUnknown(InquiryRequest)
+    const decodedEffect = decodeInquiry(body)
+    const decoded = yield* pipe(
+      decodedEffect,
+      Effect.mapError((parseError) => new ValidationError({ message: "Neplatna data", detail: String(parseError) })),
     )
 
     // Uloz do DB
@@ -44,12 +45,7 @@ export const handleCreateInquiry = (c: HonoContext): Effect.Effect<Response, nev
       hasPlayground: decoded.hasPlayground,
       notes: decoded.notes,
       selectedPrograms: decoded.selectedPrograms,
-    }).pipe(
-      Effect.mapError((insertError) => ({
-        type: "db" as const,
-        detail: String(insertError.cause),
-      }))
-    )
+    })
 
     // Email notifikace (fire-and-forget — nesmi blokovat odpoved)
     const resendKey = c.env.RESEND_API_KEY
@@ -59,18 +55,17 @@ export const handleCreateInquiry = (c: HonoContext): Effect.Effect<Response, nev
           const d1 = drizzle(c.env.DB)
           const rows = yield* Effect.tryPromise({
             try: () => d1.select().from(settings).where(eq(settings.key, "notification_emails")),
-            catch: () => ({ type: "db" as const, detail: "Nelze nacist nastaveni" }),
+            catch: (cause) => new DatabaseError({ cause }),
           })
           const emails = rows[0]?.value?.split(",").map((e: string) => e.trim()).filter(Boolean) ?? []
           if (emails.length === 0) return
 
-          const parsedPrograms: { name: string; month: string }[] = (() => {
+          const parsedPrograms: ReadonlyArray<{ readonly name: string; readonly month: string }> = (() => {
             try {
               const arr = JSON.parse(decoded.selectedPrograms)
               if (!Array.isArray(arr)) return []
-              return arr.flatMap((p: { name?: string; months?: string[]; month?: string }) => {
+              return arr.flatMap((p: { readonly name?: string; readonly months?: readonly string[]; readonly month?: string }) => {
                 const name = String(p.name ?? "")
-                // Frontend posila months jako pole stringu (vice mesicu na program)
                 if (Array.isArray(p.months) && p.months.length > 0) {
                   return [{ name, month: p.months.join(", ") }]
                 }
@@ -110,13 +105,4 @@ export const handleCreateInquiry = (c: HonoContext): Effect.Effect<Response, nev
     }
 
     return c.json({ success: true, id: result.id }, 201)
-  }).pipe(
-    Effect.catchAll((error) =>
-      Effect.succeed(
-        c.json(
-          { error: error.type === "validation" ? "Neplatná data" : error.type === "parse" ? "Neplatný JSON" : "Chyba při ukládání", detail: error.detail },
-          error.type === "db" ? 500 : 400
-        )
-      )
-    )
-  )
+  })

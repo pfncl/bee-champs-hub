@@ -129,6 +129,7 @@
 
       if (response.ok) {
         success = true
+        planner.clearAll()
       } else {
         const data = await response.json().catch(() => null)
         errorMessage = data?.detail ?? data?.error ?? t.inquiry.errorGeneral

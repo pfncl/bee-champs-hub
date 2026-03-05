@@ -42,7 +42,9 @@ const navIcons: Record<string, string> = {
         >
           <CalendarRange class="w-4 h-4 text-white/70" />
           {t.planner.title}
-          <PlannerBadge client:load />
+          <span class="inline-flex w-6 h-5.5 items-center justify-center ml-0.5">
+            <PlannerBadge client:load />
+          </span>
         </a>
       </div>
 
@@ -54,7 +56,9 @@ const navIcons: Record<string, string> = {
         >
           <CalendarRange class="w-4 h-4" />
           <span class="hidden xs:inline">{t.planner.titleShort ?? t.nav.plannerShort}</span>
-          <PlannerBadge client:load />
+          <span class="inline-flex w-6 h-5.5 items-center justify-center ml-0.5">
+            <PlannerBadge client:load />
+          </span>
         </a>
         <button
           id="hamburger-btn"
@@ -117,7 +121,9 @@ const navIcons: Record<string, string> = {
       >
         <CalendarRange class="w-5 h-5" />
         <span>{t.planner.title}</span>
-        <PlannerBadge client:load />
+        <span class="inline-flex w-6 h-5.5 items-center justify-center ml-0.5">
+          <PlannerBadge client:load />
+        </span>
       </a>
     </div>
   </nav>

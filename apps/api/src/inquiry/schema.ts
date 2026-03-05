@@ -1,22 +1,26 @@
 /**
  * Validacni schema pro poptavkovy formular
  */
-import { Schema } from "effect"
+import { Schema, pipe } from "effect"
+
+const PositiveInt = pipe(Schema.Number, Schema.positive(), Schema.int())
+const Email = pipe(
+  Schema.NonEmptyString,
+  Schema.filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) || "Neplatny e-mail"),
+)
 
 export class InquiryRequest extends Schema.Class<InquiryRequest>("InquiryRequest")({
   // Skola
   schoolName: Schema.NonEmptyString,
   schoolType: Schema.NonEmptyString,
   city: Schema.NonEmptyString,
-  childrenCount: Schema.Number.pipe(Schema.positive(), Schema.int()),
+  childrenCount: PositiveInt,
   ageRange: Schema.NonEmptyString,
 
   // Kontakt
   contactName: Schema.NonEmptyString,
   contactPhone: Schema.NonEmptyString,
-  contactEmail: Schema.NonEmptyString.pipe(
-    Schema.filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) || "Neplatný e-mail")
-  ),
+  contactEmail: Email,
 
   // Volitelne
   contactPosition: Schema.optional(Schema.String),

@@ -2,269 +2,305 @@
  * Superadmin API routes — dashboard stats, D1 konzole, worker logy, cache purge
  */
 import { Hono } from "hono"
+import { Effect, Schema, pipe } from "effect"
 import { drizzle } from "drizzle-orm/d1"
 import { sql } from "drizzle-orm"
 import type { Env } from "../types"
+import { makeHonoRuntime } from "../runtime"
+import { DbRepository, DbRepositoryLive } from "../db"
+import { ValidationError, ServiceUnavailableError, CloudflareApiError } from "../errors"
 import { superadminAuth } from "./middleware"
-
-const CF_ACCOUNT_ID = "a6f73612807840e33437c92d3771f8be"
-const CF_D1_DATABASE_ID = "0462ef41-dd80-47e5-baa5-7e8814546e14"
 
 const superadmin = new Hono<{ Bindings: Env }>()
 
-// Login PRED middleware
-superadmin.post("/login", async (c) => {
-  const { token } = await c.req.json() as { token: string }
-  if (token === c.env.SUPERADMIN_TOKEN) {
-    const isProduction = c.env.ENVIRONMENT === "production"
-    const cookie = `superadmin_token=${token}; Path=/; Max-Age=${30 * 24 * 60 * 60}; HttpOnly; SameSite=Lax${isProduction ? "; Secure" : ""}`
-    c.header("Set-Cookie", cookie)
-    return c.json({ data: { success: true } }, 200)
-  }
-  return c.json({ error: "Neplatny token" }, 401)
-})
+const withDb = makeHonoRuntime((env) => DbRepositoryLive(env.DB))
 
-// Logout — smaze HttpOnly cookie
-superadmin.post("/logout", async (c) => {
-  const isProduction = c.env.ENVIRONMENT === "production"
-  c.header("Set-Cookie", `superadmin_token=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax${isProduction ? "; Secure" : ""}`)
-  return c.json({ data: { success: true } })
-})
+// === Helpers ===
+
+const LoginRequest = Schema.Struct({ token: Schema.NonEmptyString })
+
+const requireCfToken = (env: Env): Effect.Effect<string, ServiceUnavailableError> =>
+  env.CF_API_TOKEN
+    ? Effect.succeed(env.CF_API_TOKEN)
+    : Effect.fail(new ServiceUnavailableError({ message: "CF_API_TOKEN neni nastaven" }))
+
+const cfAccountId = (env: Env): string => env.CF_ACCOUNT_ID ?? "a6f73612807840e33437c92d3771f8be"
+const cfD1DatabaseId = (env: Env): string => env.CF_D1_DATABASE_ID ?? "0462ef41-dd80-47e5-baa5-7e8814546e14"
+
+const cfFetch = <T>(url: string, token: string, options?: RequestInit): Effect.Effect<T, CloudflareApiError> =>
+  Effect.gen(function* () {
+    const res = yield* Effect.tryPromise({
+      try: () => fetch(url, {
+        ...options,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          ...options?.headers,
+        },
+      }),
+      catch: (cause) => new CloudflareApiError({ message: `CF fetch selhal: ${String(cause)}` }),
+    })
+
+    if (!res.ok) {
+      const text = yield* Effect.tryPromise({
+        try: () => res.text(),
+        catch: () => new CloudflareApiError({ message: `CF API: ${res.status}`, status: res.status }),
+      })
+      return yield* Effect.fail(new CloudflareApiError({ message: `CF API: ${res.status} ${text}`, status: res.status }))
+    }
+
+    return yield* Effect.tryPromise({
+      try: () => res.json() as Promise<T>,
+      catch: () => new CloudflareApiError({ message: "Neplatna CF API odpoved" }),
+    })
+  })
+
+// === Login (PRED middleware) ===
+
+superadmin.post("/login", withDb((c) =>
+  Effect.gen(function* () {
+    const raw = yield* Effect.tryPromise({
+      try: () => c.req.json(),
+      catch: () => new ValidationError({ message: "Neplatny JSON" }),
+    })
+    const decode = Schema.decodeUnknown(LoginRequest)
+    const decoded = decode(raw)
+    const body = yield* pipe(
+      decoded,
+      Effect.mapError(() => new ValidationError({ message: "Neplatna data" })),
+    )
+    if (body.token === c.env.SUPERADMIN_TOKEN) {
+      const isProduction = c.env.ENVIRONMENT === "production"
+      const cookie = `superadmin_token=${body.token}; Path=/; Max-Age=${30 * 24 * 60 * 60}; HttpOnly; SameSite=Lax${isProduction ? "; Secure" : ""}`
+      c.header("Set-Cookie", cookie)
+      return c.json({ data: { success: true } }, 200)
+    }
+    return c.json({ error: "Neplatny token" }, 401)
+  })
+))
+
+superadmin.post("/logout", withDb((c) =>
+  Effect.gen(function* () {
+    const isProduction = c.env.ENVIRONMENT === "production"
+    c.header("Set-Cookie", `superadmin_token=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax${isProduction ? "; Secure" : ""}`)
+    return c.json({ data: { success: true } })
+  })
+))
 
 // Vsechny ostatni routes chranene tokenem
 superadmin.use("*", superadminAuth)
 
 // ==================== DASHBOARD STATS ====================
 
-superadmin.get("/stats", async (c) => {
-  const db = drizzle(c.env.DB)
-  try {
-    const [programsCount, categoriesCount, inquiriesCount, testimonialsCount, settingsCount] = await Promise.all([
-      db.all(sql`SELECT COUNT(*) as count FROM programs`),
-      db.all(sql`SELECT COUNT(*) as count FROM categories`),
-      db.all(sql`SELECT COUNT(*) as count FROM inquiries`),
-      db.all(sql`SELECT COUNT(*) as count FROM testimonials`),
-      db.all(sql`SELECT COUNT(*) as count FROM settings`),
-    ])
+superadmin.get("/stats", withDb((c) =>
+  Effect.gen(function* () {
+    const db = yield* DbRepository
+    const countQuery = (table: string) =>
+      db.query((d1) => d1.all<{ readonly count: number }>(sql.raw(`SELECT COUNT(*) as count FROM ${table}`)))
+
+    const [prg, cat, inq, tst, stg] = yield* Effect.all([
+      countQuery("programs"),
+      countQuery("categories"),
+      countQuery("inquiries"),
+      countQuery("testimonials"),
+      countQuery("settings"),
+    ], { concurrency: "unbounded" })
+
+    const getCount = (rows: ReadonlyArray<{ readonly count: number }>): number =>
+      rows[0]?.count ?? 0
+
     return c.json({
       data: {
-        programs: (programsCount[0] as { count: number })?.count ?? 0,
-        categories: (categoriesCount[0] as { count: number })?.count ?? 0,
-        inquiries: (inquiriesCount[0] as { count: number })?.count ?? 0,
-        testimonials: (testimonialsCount[0] as { count: number })?.count ?? 0,
-        settings: (settingsCount[0] as { count: number })?.count ?? 0,
+        programs: getCount(prg),
+        categories: getCount(cat),
+        inquiries: getCount(inq),
+        testimonials: getCount(tst),
+        settings: getCount(stg),
       },
     })
-  } catch (e) {
-    return c.json({ error: String(e) }, 500)
-  }
-})
+  })
+))
 
 // ==================== D1 KONZOLE ====================
 
-superadmin.post("/d1/query", async (c) => {
-  const { sql: sqlQuery } = await c.req.json() as { sql: string }
-  if (!sqlQuery?.trim()) {
-    return c.json({ error: "SQL dotaz je prazdny" }, 400)
-  }
+superadmin.post("/d1/query", withDb((c) =>
+  Effect.gen(function* () {
+    const body = yield* Effect.tryPromise({
+      try: () => c.req.json() as Promise<{ readonly sql?: string }>,
+      catch: () => new ValidationError({ message: "Neplatny JSON" }),
+    })
+    const sqlQuery = body.sql?.trim() ?? ""
+    if (sqlQuery === "") {
+      return c.json({ error: "SQL dotaz je prazdny" }, 400)
+    }
 
-  // Blokuj destruktivni DDL prikazy
-  const forbidden = /^\s*(DROP\s+TABLE|DROP\s+DATABASE|ALTER\s+TABLE\s+\w+\s+RENAME|ATTACH|DETACH|PRAGMA\s+(?!table_info|table_list))/i
-  if (forbidden.test(sqlQuery)) {
-    return c.json({ error: "Tento prikaz je zakazany v D1 konzoli" }, 403)
-  }
+    // Blokuj destruktivni DDL prikazy
+    const forbidden = /^\s*(DROP\s+TABLE|DROP\s+DATABASE|ALTER\s+TABLE\s+\w+\s+RENAME|ATTACH|DETACH|PRAGMA\s+(?!table_info|table_list))/i
+    if (forbidden.test(sqlQuery)) {
+      return c.json({ error: "Tento prikaz je zakazany v D1 konzoli" }, 403)
+    }
 
-  try {
-    const db = c.env.DB
-    console.log(`[D1 Konzole] ${sqlQuery.slice(0, 200)}`)
-    const stmt = db.prepare(sqlQuery)
-    const result = await stmt.all()
+    yield* Effect.logInfo(`[D1 Konzole] ${sqlQuery.slice(0, 200)}`)
+
+    const result = yield* Effect.tryPromise({
+      try: () => {
+        const stmt = c.env.DB.prepare(sqlQuery)
+        return stmt.all()
+      },
+      catch: (cause) => new ValidationError({ message: String(cause) }),
+    })
+
     return c.json({
       data: {
         results: result.results ?? [],
         meta: result.meta ?? {},
       },
     })
-  } catch (e) {
-    return c.json({ error: String(e) }, 400)
-  }
-})
+  })
+))
 
 // D1 export pres Cloudflare REST API
-superadmin.post("/d1/export", async (c) => {
-  const cfToken = c.env.CF_API_TOKEN
-  if (!cfToken) {
-    return c.json({ error: "CF_API_TOKEN neni nastaven" }, 503)
-  }
+superadmin.post("/d1/export", withDb((c) =>
+  Effect.gen(function* () {
+    const cfToken = yield* requireCfToken(c.env)
+    const accountId = cfAccountId(c.env)
+    const databaseId = cfD1DatabaseId(c.env)
+    const exportUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/d1/database/${databaseId}/export`
 
-  try {
     // Zahajit export
-    const exportRes = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/d1/database/${CF_D1_DATABASE_ID}/export`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${cfToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          output_format: "polling",
-          dump_options: { no_schema: false, no_data: false, tables: [] },
-        }),
-      }
-    )
-
-    if (!exportRes.ok) {
-      const text = await exportRes.text()
-      return c.json({ error: `CF API: ${exportRes.status} ${text}` }, 500)
-    }
-
-    const exportData = await exportRes.json() as {
-      result: { filename: string; signed_url?: string; status?: string; at_bookmark?: string }
-    }
+    const exportData = yield* cfFetch<{
+      readonly result: { readonly filename: string; readonly signed_url?: string; readonly status?: string; readonly at_bookmark?: string }
+    }>(exportUrl, cfToken, {
+      method: "POST",
+      body: JSON.stringify({
+        output_format: "polling",
+        dump_options: { no_schema: false, no_data: false, tables: [] },
+      }),
+    })
 
     // Polling — cekame na dokonceni (max 30s)
     const startTime = Date.now()
     let currentBookmark = exportData.result.at_bookmark ?? ""
 
     while (Date.now() - startTime < 30000) {
-      const pollRes = await fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/d1/database/${CF_D1_DATABASE_ID}/export`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${cfToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            output_format: "polling",
-            current_bookmark: currentBookmark,
-            dump_options: { no_schema: false, no_data: false, tables: [] },
-          }),
-        }
-      )
-
-      if (!pollRes.ok) break
-
-      const pollData = await pollRes.json() as {
-        result: { status: string; signed_url?: string; at_bookmark?: string }
-      }
+      const pollData = yield* cfFetch<{
+        readonly result: { readonly status: string; readonly signed_url?: string; readonly at_bookmark?: string }
+      }>(exportUrl, cfToken, {
+        method: "POST",
+        body: JSON.stringify({
+          output_format: "polling",
+          current_bookmark: currentBookmark,
+          dump_options: { no_schema: false, no_data: false, tables: [] },
+        }),
+      })
 
       if (pollData.result.status === "complete" && pollData.result.signed_url) {
         return c.json({ data: { url: pollData.result.signed_url } })
       }
 
       currentBookmark = pollData.result.at_bookmark ?? currentBookmark
-      await new Promise(r => setTimeout(r, 1000))
+      yield* Effect.sleep("1 second")
     }
 
     return c.json({ error: "Export timeout" }, 504)
-  } catch (e) {
-    return c.json({ error: String(e) }, 500)
-  }
-})
+  })
+))
 
 // ==================== WORKER LOGY ====================
 
-superadmin.post("/logs/tail", async (c) => {
-  const cfToken = c.env.CF_API_TOKEN
-  if (!cfToken) {
-    return c.json({ error: "CF_API_TOKEN neni nastaven" }, 503)
-  }
+const ScriptNameRequest = Schema.Struct({ scriptName: Schema.NonEmptyString })
+const ALLOWED_SCRIPTS = ["bee-champs-hub-api", "bee-champs-hub-web"] as const
 
-  const { scriptName } = await c.req.json() as { scriptName: string }
-  const allowed = ["bee-champs-hub-api", "bee-champs-hub-web"]
-  if (!allowed.includes(scriptName)) {
-    return c.json({ error: `Neplatny worker: ${scriptName}` }, 400)
-  }
-
-  try {
-    const res = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/workers/scripts/${scriptName}/tails`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${cfToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({}),
-      }
+superadmin.post("/logs/tail", withDb((c) =>
+  Effect.gen(function* () {
+    const cfToken = yield* requireCfToken(c.env)
+    const rawBody = yield* Effect.tryPromise({
+      try: () => c.req.json(),
+      catch: () => new ValidationError({ message: "Neplatny JSON" }),
+    })
+    const decodeScript = Schema.decodeUnknown(ScriptNameRequest)
+    const decoded = decodeScript(rawBody)
+    const body = yield* pipe(
+      decoded,
+      Effect.mapError(() => new ValidationError({ message: "Neplatna data" })),
     )
 
-    if (!res.ok) {
-      const text = await res.text()
-      return c.json({ error: `CF API: ${res.status} ${text}` }, 500)
+    if (!ALLOWED_SCRIPTS.includes(body.scriptName as typeof ALLOWED_SCRIPTS[number])) {
+      return c.json({ error: `Neplatny worker: ${body.scriptName}` }, 400)
     }
 
-    const data = await res.json() as {
-      result: { id: string; url: string; expires_at: string }
-    }
+    const accountId = cfAccountId(c.env)
+    const data = yield* cfFetch<{
+      readonly result: { readonly id: string; readonly url: string; readonly expires_at: string }
+    }>(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/${body.scriptName}/tails`,
+      cfToken,
+      { method: "POST", body: JSON.stringify({}) },
+    )
 
     return c.json({
       data: {
         id: data.result.id,
         url: data.result.url,
         expiresAt: data.result.expires_at,
-        scriptName,
+        scriptName: body.scriptName,
       },
     })
-  } catch (e) {
-    return c.json({ error: String(e) }, 500)
-  }
-})
+  })
+))
 
-superadmin.delete("/logs/tail/:tailId", async (c) => {
-  const cfToken = c.env.CF_API_TOKEN
-  if (!cfToken) {
-    return c.json({ error: "CF_API_TOKEN neni nastaven" }, 503)
-  }
+superadmin.delete("/logs/tail/:tailId", withDb((c) =>
+  Effect.gen(function* () {
+    const cfToken = yield* requireCfToken(c.env)
+    const tailId = c.req.param("tailId")
+    const body = yield* Effect.tryPromise({
+      try: () => c.req.json().catch(() => ({})) as Promise<{ readonly scriptName?: string }>,
+      catch: () => new ValidationError({ message: "Neplatny JSON" }),
+    })
+    const scriptName = body.scriptName ?? c.req.query("scriptName") ?? "bee-champs-hub-api"
+    const accountId = cfAccountId(c.env)
 
-  const tailId = c.req.param("tailId")
-  const body = await c.req.json().catch(() => ({})) as { scriptName?: string }
-  const scriptName = body.scriptName ?? c.req.query("scriptName") ?? "bee-champs-hub-api"
+    yield* Effect.tryPromise({
+      try: () => fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/${scriptName}/tails/${tailId}`,
+        { method: "DELETE", headers: { Authorization: `Bearer ${cfToken}` } },
+      ),
+      catch: (cause) => new CloudflareApiError({ message: `Delete tail selhal: ${String(cause)}` }),
+    })
 
-  try {
-    await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/workers/scripts/${scriptName}/tails/${tailId}`,
-      {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${cfToken}` },
-      }
-    )
     return c.json({ data: { success: true } })
-  } catch (e) {
-    return c.json({ error: String(e) }, 500)
-  }
-})
+  })
+))
 
 // ==================== CACHE PURGE ====================
 
-superadmin.post("/cache/purge", async (c) => {
-  const cfToken = c.env.CF_API_TOKEN
-  if (!cfToken) {
-    return c.json({ error: "CF_API_TOKEN neni nastaven" }, 503)
-  }
+const CachePurgeRequest = Schema.Struct({
+  purgeEverything: Schema.optional(Schema.Boolean),
+  files: Schema.optional(Schema.Array(Schema.String)),
+})
 
-  const body = await c.req.json() as { purgeEverything?: boolean; files?: string[] }
-
-  // Potrebujeme zone ID — pouzijeme env nebo konstantu
-  const zoneId = "beechampshub.cz"
-
-  try {
-    // Nejdriv ziskame zone ID z API
-    const zonesRes = await fetch(
-      `https://api.cloudflare.com/client/v4/zones?name=${zoneId}`,
-      {
-        headers: { Authorization: `Bearer ${cfToken}` },
-      }
+superadmin.post("/cache/purge", withDb((c) =>
+  Effect.gen(function* () {
+    const cfToken = yield* requireCfToken(c.env)
+    const rawPurge = yield* Effect.tryPromise({
+      try: () => c.req.json(),
+      catch: () => new ValidationError({ message: "Neplatny JSON" }),
+    })
+    const decodePurge = Schema.decodeUnknown(CachePurgeRequest)
+    const decoded = decodePurge(rawPurge)
+    const body = yield* pipe(
+      decoded,
+      Effect.mapError(() => new ValidationError({ message: "Neplatna data" })),
     )
 
-    let cfZoneId: string | null = null
-    if (zonesRes.ok) {
-      const zonesData = await zonesRes.json() as { result: { id: string }[] }
-      cfZoneId = zonesData.result?.[0]?.id ?? null
-    }
+    const accountId = cfAccountId(c.env)
 
+    // Ziskame zone ID z API
+    const zonesData = yield* cfFetch<{
+      readonly result: ReadonlyArray<{ readonly id: string }>
+    }>(`https://api.cloudflare.com/client/v4/zones?name=beechampshub.cz`, cfToken)
+
+    const cfZoneId = zonesData.result[0]?.id
     if (!cfZoneId) {
       return c.json({ error: "Zona nenalezena. Cache purge vyzaduje CF zone." }, 400)
     }
@@ -273,28 +309,15 @@ superadmin.post("/cache/purge", async (c) => {
       ? { purge_everything: true }
       : { files: body.files ?? [] }
 
-    const purgeRes = await fetch(
-      `https://api.cloudflare.com/client/v4/zones/${cfZoneId}/purge_cache`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${cfToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(purgeBody),
-      }
-    )
+    const purgeData = yield* cfFetch<{
+      readonly result: { readonly id: string }
+    }>(`https://api.cloudflare.com/client/v4/zones/${cfZoneId}/purge_cache`, cfToken, {
+      method: "POST",
+      body: JSON.stringify(purgeBody),
+    })
 
-    if (!purgeRes.ok) {
-      const text = await purgeRes.text()
-      return c.json({ error: `CF API: ${purgeRes.status} ${text}` }, 500)
-    }
-
-    const purgeData = await purgeRes.json() as { result: { id: string } }
     return c.json({ data: { ok: true, id: purgeData.result?.id } })
-  } catch (e) {
-    return c.json({ error: String(e) }, 500)
-  }
-})
+  })
+))
 
 export { superadmin }
