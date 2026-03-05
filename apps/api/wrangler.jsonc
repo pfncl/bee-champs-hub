@@ -12,7 +12,7 @@
       "binding": "DB",
       "database_name": "bee-champs-db",
       "database_id": "0462ef41-dd80-47e5-baa5-7e8814546e14",
-      "migrations_dir": "../../packages/db/src/migrations"
+      "migrations_dir": "../../packages/db/drizzle"
     }
   ],
 

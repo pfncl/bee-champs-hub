@@ -1,57 +1,58 @@
 ---
-import { Users, Clock, GraduationCap, Plus } from '@lucide/astro';
+import { Users, Clock, GraduationCap } from '@lucide/astro';
 import type { Program } from '@bee-champs/shared';
+import AddToPlannerButton from './planner/AddToPlannerButton.svelte';
 
 interface Props {
   program: Program;
   color: string;
+  categoryLabel: string;
 }
 
-const { program, color } = Astro.props;
+const { program, color, categoryLabel } = Astro.props;
 ---
 
-<div class="bg-white rounded-xl p-6 border border-border-light hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group">
-  <!-- Ikona + název -->
-  <div class="flex items-start gap-3 mb-4">
+<div class="bg-white rounded-2xl p-6 shadow-xl shadow-black/5 border border-border-light flex flex-col h-full hover:shadow-2xl hover:border-border-light/80 transition-all duration-300">
+  <!-- Hlavička: ikona + badge -->
+  <div class="flex justify-between items-start mb-4">
+    <div class="text-4xl">{program.icon}</div>
     <div
-      class="w-12 h-12 rounded-lg flex items-center justify-center text-2xl shrink-0"
-      style={`background-color: ${color}15;`}
+      class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
+      style={`background-color: ${color}15; color: ${color};`}
     >
-      {program.icon}
-    </div>
-    <div>
-      <h3 class="text-lg font-bold text-text-dark font-heading group-hover:text-primary transition-colors">
-        {program.name}
-      </h3>
-      <p class="text-text-muted text-sm mt-1">
-        {program.description}
-      </p>
+      {categoryLabel}
     </div>
   </div>
 
+  <!-- Název -->
+  <h3 class="text-xl font-bold font-heading text-text-dark mb-2">
+    {program.name}
+  </h3>
+
+  <!-- Popis -->
+  <p class="text-text-muted text-sm mb-6 flex-grow">
+    {program.description}
+  </p>
+
   <!-- Metadata -->
-  <div class="flex flex-wrap gap-3 text-xs text-text-muted">
-    <span class="inline-flex items-center gap-1">
-      <GraduationCap class="w-3.5 h-3.5" />
-      {program.ageRange}
-    </span>
-    <span class="inline-flex items-center gap-1">
-      <Clock class="w-3.5 h-3.5" />
-      {program.duration}
-    </span>
-    <span class="inline-flex items-center gap-1">
-      <Users class="w-3.5 h-3.5" />
-      {program.instructors} lekt.
-    </span>
+  <div class="space-y-2 mb-6 pt-4 border-t border-border-light/40">
+    <div class="flex items-center text-sm text-text-muted">
+      <GraduationCap class="w-4 h-4 mr-3 text-text-muted/60" />
+      <span class="font-medium">Věk:</span>
+      <span class="ml-1">{program.ageRange}</span>
+    </div>
+    <div class="flex items-center text-sm text-text-muted">
+      <Clock class="w-4 h-4 mr-3 text-text-muted/60" />
+      <span class="font-medium">Délka:</span>
+      <span class="ml-1">{program.duration}</span>
+    </div>
+    <div class="flex items-center text-sm text-text-muted">
+      <Users class="w-4 h-4 mr-3 text-text-muted/60" />
+      <span class="font-medium">Lektoři:</span>
+      <span class="ml-1">{program.instructors}</span>
+    </div>
   </div>
 
   <!-- Přidat do plánovače -->
-  <button
-    class="mt-4 w-full py-2.5 rounded-lg border-2 border-dashed font-semibold text-sm transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
-    style={`border-color: ${color}40; color: ${color};`}
-    data-program-id={program.id}
-  >
-    <Plus class="w-4 h-4" />
-    Přidat do plánovače
-  </button>
+  <AddToPlannerButton programId={program.id} color={color} client:load />
 </div>

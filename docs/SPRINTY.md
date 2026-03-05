@@ -86,29 +86,29 @@
 
 ---
 
-## Sprint 4: Rocni planovac (hlavni funkcionalita)
+## Sprint 4: Rocni planovac (hlavni funkcionalita) [HOTOVO]
 **Kapitola:** 5 (Stranka 3)
 **Cil:** Kompletni planovac — sidebar + kalendar + interakce
 
 ### Ukoly:
-- [ ] 5.1 Levy panel (Sidebar) — 340px, sticky, scrollovatelny
+- [x] 5.1 Levy panel (Sidebar) — 340px, sticky, scrollovatelny
   - Hlavicka: nadpis, popis, vyhledavani, filtracni tlacitka
   - Seznam programu seskupenych pod kategoriemi
   - Zasktavaci pole, barevne ramecky, stav "Vybrano (Nx)"
   - Realtime filtrace podle nazvu + kategorie
-- [ ] 5.2 Pravy panel (Rocni kalendar) — grid 3 sloupce, 12 mesicu (zari-srpen)
+- [x] 5.2 Pravy panel (Rocni kalendar) — grid 3 sloupce, 12 mesicu (zari-srpen)
   - Horni lista: nadpis, pocitadlo, tlacitko "Odeslat poptavku"
   - Karticky mesicu s barevnymi stitky programu
   - Tlacitko "+ Pridat program" na kazdem mesici
   - Tlacitko X pro odebrani programu z mesice
-- [ ] 5.3 Modalni okno — prirazeni mesice
+- [x] 5.3 Modalni okno — prirazeni mesice
   - Mrizka 12 tlacitek mesicu, prepinani stavu
   - Vice mesicu najednou
   - Okamzita aktualizace kalendare i sidebaru
-- [ ] Spodni summary lista (sticky) — vybrane programy, cipy, "Vymazat vse"
-- [ ] Stav planovace — uchovani v pameti prohlizece (JS promenna)
-- [ ] Badge v navigaci — aktualni pocet vybranych programu
-- [ ] Responsivita: tablet (sidebar nad kalendarem), mobil (1 sloupec)
+- [x] Spodni summary lista (sticky) — vybrane programy, cipy, "Vymazat vse"
+- [x] Stav planovace — uchovani v pameti prohlizece (JS promenna)
+- [x] Badge v navigaci — aktualni pocet vybranych programu
+- [x] Responsivita: tablet (sidebar nad kalendarem), mobil (1 sloupec)
 
 ### Poznamka:
 Toto je Svelte 5 interaktivni komponenta — nejslozitejsi cast webu. Pouzit Svelte 5 runes ($state, $derived) pro stav.

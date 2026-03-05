@@ -1,11 +1,12 @@
 /**
- * Stav rocniho planovace — Svelte 5 runes
+ * Stav ročního plánovače — Svelte 5 runes
  *
- * Mesice: zari (9) az srpen (8) nasledujiciho roku
- * Kazdy mesic muze mit prirazene programy
+ * Komunikace mezi Astro ostrovy přes custom events na window.
+ * Persistence přes localStorage.
  */
 
 import { categories, programs, type CategorySlug, type Program } from "@bee-champs/shared"
+import { t } from "../../i18n"
 
 // === Typy ===
 
@@ -16,52 +17,89 @@ export interface MonthAssignment {
 
 export type MonthIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11
 
-/** Mesice skolniho roku: zari (9) az srpen (8) */
-export const SCHOOL_MONTHS = [
-  { index: 0 as MonthIndex, calendarMonth: 9, name: "Zari" },
-  { index: 1 as MonthIndex, calendarMonth: 10, name: "Rijen" },
-  { index: 2 as MonthIndex, calendarMonth: 11, name: "Listopad" },
-  { index: 3 as MonthIndex, calendarMonth: 12, name: "Prosinec" },
-  { index: 4 as MonthIndex, calendarMonth: 1, name: "Leden" },
-  { index: 5 as MonthIndex, calendarMonth: 2, name: "Unor" },
-  { index: 6 as MonthIndex, calendarMonth: 3, name: "Brezen" },
-  { index: 7 as MonthIndex, calendarMonth: 4, name: "Duben" },
-  { index: 8 as MonthIndex, calendarMonth: 5, name: "Kveten" },
-  { index: 9 as MonthIndex, calendarMonth: 6, name: "Cerven" },
-  { index: 10 as MonthIndex, calendarMonth: 7, name: "Cervenec" },
-  { index: 11 as MonthIndex, calendarMonth: 8, name: "Srpen" },
+/** Měsíce školního roku: září (9) až srpen (8) */
+const monthKeys = [
+  "september", "october", "november", "december",
+  "january", "february", "march", "april",
+  "may", "june", "july", "august",
 ] as const
 
-// === Pomocne funkce ===
+export const SCHOOL_MONTHS = monthKeys.map((key, i) => ({
+  index: i as MonthIndex,
+  calendarMonth: i < 4 ? i + 9 : i - 3,
+  name: t.planner.months[key],
+  shortName: t.planner.monthsShort[key],
+}))
 
-/** Najde program podle ID */
+// === Pomocné funkce ===
+
 export function getProgramById(id: string): Program | undefined {
   return programs.find((p) => p.id === id)
 }
 
-/** Barva kategorie podle slugu */
 export function getCategoryColor(slug: CategorySlug): string {
   return categories.find((c) => c.slug === slug)?.color ?? "#F5A623"
 }
 
-/** Nazev kategorie podle slugu */
-export function getCategoryName(slug: CategorySlug): string {
-  return categories.find((c) => c.slug === slug)?.name ?? slug
+// === Persistence (localStorage) ===
+
+const STORAGE_KEY = "bee-champs-planner"
+
+function loadAssignments(): MonthAssignment[] {
+  if (typeof window === "undefined") return []
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return []
+    const data = JSON.parse(raw)
+    if (!Array.isArray(data)) return []
+    return data.filter(
+      (a: unknown): a is MonthAssignment =>
+        typeof a === "object" && a !== null &&
+        "programId" in a && "monthIndex" in a &&
+        typeof (a as MonthAssignment).programId === "string" &&
+        typeof (a as MonthAssignment).monthIndex === "number"
+    )
+  } catch {
+    return []
+  }
 }
 
-// === Reaktivni stav ===
+function saveAssignments(data: MonthAssignment[]) {
+  if (typeof window === "undefined") return
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+  } catch {
+    // localStorage plný nebo nedostupný
+  }
+}
 
-// Vybrane programy (zaskrtnute v sidebaru)
-let selectedProgramIds = $state<Set<string>>(new Set())
+// === Custom events pro komunikaci mezi Astro ostrovy ===
 
-// Prirazeni programu k mesicum
-let assignments = $state<MonthAssignment[]>([])
+const OPEN_MODAL_EVENT = "bee-champs:open-modal"
+const STATE_CHANGED_EVENT = "bee-champs:state-changed"
+
+/** Vyšle event na otevření modálu (pro cross-island komunikaci) */
+export function emitOpenModal(programId: string) {
+  if (typeof window === "undefined") return
+  window.dispatchEvent(new CustomEvent(OPEN_MODAL_EVENT, { detail: { programId } }))
+}
+
+/** Vyšle event o změně stavu (pro badge aktualizaci) */
+function emitStateChanged() {
+  if (typeof window === "undefined") return
+  window.dispatchEvent(new CustomEvent(STATE_CHANGED_EVENT))
+}
+
+// === Reaktivní stav ===
+
+// Přiřazení programů k měsícům (jediný zdroj pravdy, persistované)
+let assignments = $state<MonthAssignment[]>(loadAssignments())
 
 // Filtrace
 let searchQuery = $state("")
 let activeCategory = $state<CategorySlug | "all">("all")
 
-// Modal
+// Modál
 let modalOpen = $state(false)
 let modalProgramId = $state<string | null>(null)
 
@@ -84,15 +122,15 @@ const filteredPrograms = $derived.by(() => {
   return filtered
 })
 
-const selectedProgramCount = $derived(selectedProgramIds.size)
-
-const selectedPrograms = $derived(
-  programs.filter((p) => selectedProgramIds.has(p.id))
+/** Programy s alespoň jedním přiřazením */
+const assignedPrograms = $derived(
+  programs.filter((p) => assignments.some((a) => a.programId === p.id))
 )
 
+const assignedProgramCount = $derived(assignedPrograms.length)
 const totalAssignments = $derived(assignments.length)
 
-/** Programy prirazene k danemu mesici */
+/** Programy přiřazené k danému měsíci */
 function getMonthPrograms(monthIndex: MonthIndex): Program[] {
   const ids = assignments
     .filter((a) => a.monthIndex === monthIndex)
@@ -100,38 +138,30 @@ function getMonthPrograms(monthIndex: MonthIndex): Program[] {
   return ids.map((id) => getProgramById(id)).filter((p): p is Program => p !== undefined)
 }
 
-/** Mesice prirazene danemu programu */
+/** Měsíce přiřazené danému programu */
 function getProgramMonths(programId: string): MonthIndex[] {
   return assignments.filter((a) => a.programId === programId).map((a) => a.monthIndex as MonthIndex)
 }
 
+/** Má program alespoň jedno přiřazení? */
+function isProgramAssigned(programId: string): boolean {
+  return assignments.some((a) => a.programId === programId)
+}
+
 // === Akce ===
 
-function toggleProgram(programId: string) {
-  const next = new Set(selectedProgramIds)
-  if (next.has(programId)) {
-    next.delete(programId)
-    // Odebrat vsechna prirazeni tohoto programu
-    assignments = assignments.filter((a) => a.programId !== programId)
-  } else {
-    next.add(programId)
-  }
-  selectedProgramIds = next
+function persistAndNotify() {
+  saveAssignments(assignments)
+  emitStateChanged()
 }
 
 function assignProgramToMonth(programId: string, monthIndex: MonthIndex) {
-  // Zabranit duplicitam
   const exists = assignments.some(
     (a) => a.programId === programId && a.monthIndex === monthIndex
   )
   if (!exists) {
     assignments = [...assignments, { programId, monthIndex }]
-    // Automaticky oznacit program jako vybrany
-    if (!selectedProgramIds.has(programId)) {
-      const next = new Set(selectedProgramIds)
-      next.add(programId)
-      selectedProgramIds = next
-    }
+    persistAndNotify()
   }
 }
 
@@ -139,6 +169,7 @@ function removeProgramFromMonth(programId: string, monthIndex: MonthIndex) {
   assignments = assignments.filter(
     (a) => !(a.programId === programId && a.monthIndex === monthIndex)
   )
+  persistAndNotify()
 }
 
 function toggleMonthForProgram(programId: string, monthIndex: MonthIndex) {
@@ -152,9 +183,14 @@ function toggleMonthForProgram(programId: string, monthIndex: MonthIndex) {
   }
 }
 
+function removeProgram(programId: string) {
+  assignments = assignments.filter((a) => a.programId !== programId)
+  persistAndNotify()
+}
+
 function clearAll() {
-  selectedProgramIds = new Set()
   assignments = []
+  persistAndNotify()
 }
 
 function openModal(programId: string) {
@@ -175,12 +211,38 @@ function setActiveCategory(category: CategorySlug | "all") {
   activeCategory = category
 }
 
+/** Znovu načte stav z localStorage (pro synchronizaci mezi ostrovy) */
+function reloadFromStorage() {
+  assignments = loadAssignments()
+}
+
 // === Export ===
 
 export function usePlanner() {
+  // Poslouchej custom events (pro cross-island komunikaci)
+  $effect(() => {
+    function handleOpenModal(e: Event) {
+      const detail = (e as CustomEvent).detail
+      if (detail?.programId) {
+        openModal(detail.programId)
+      }
+    }
+
+    function handleStateChanged() {
+      reloadFromStorage()
+    }
+
+    window.addEventListener(OPEN_MODAL_EVENT, handleOpenModal)
+    window.addEventListener(STATE_CHANGED_EVENT, handleStateChanged)
+
+    return () => {
+      window.removeEventListener(OPEN_MODAL_EVENT, handleOpenModal)
+      window.removeEventListener(STATE_CHANGED_EVENT, handleStateChanged)
+    }
+  })
+
   return {
-    // Stav (gettery pro reaktivni cteni)
-    get selectedProgramIds() { return selectedProgramIds },
+    // Stav
     get assignments() { return assignments },
     get searchQuery() { return searchQuery },
     get activeCategory() { return activeCategory },
@@ -189,23 +251,25 @@ export function usePlanner() {
 
     // Derived
     get filteredPrograms() { return filteredPrograms },
-    get selectedProgramCount() { return selectedProgramCount },
-    get selectedPrograms() { return selectedPrograms },
+    get assignedPrograms() { return assignedPrograms },
+    get assignedProgramCount() { return assignedProgramCount },
     get totalAssignments() { return totalAssignments },
 
-    // Pomocne
+    // Pomocné
     getMonthPrograms,
     getProgramMonths,
+    isProgramAssigned,
 
     // Akce
-    toggleProgram,
     assignProgramToMonth,
     removeProgramFromMonth,
     toggleMonthForProgram,
+    removeProgram,
     clearAll,
     openModal,
     closeModal,
     setSearchQuery,
     setActiveCategory,
+    reloadFromStorage,
   }
 }

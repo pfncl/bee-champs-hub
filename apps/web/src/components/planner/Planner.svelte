@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "../../i18n"
   import { usePlanner } from "./plannerState.svelte"
   import Sidebar from "./Sidebar.svelte"
   import CalendarGrid from "./CalendarGrid.svelte"
@@ -11,56 +12,55 @@
 <div class="min-h-screen bg-bg-warm">
   <!-- Horni lista -->
   <div class="bg-white border-b border-border-light sticky top-[68px] z-30">
-    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+    <div class="w-full px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-text-dark font-heading">Roční plánovač</h1>
-        <p class="text-text-muted text-sm mt-0.5">
-          Vyberte programy a přiřaďte je do měsíců školního roku
-        </p>
-      </div>
-      <div class="flex items-center gap-4">
-        <div class="hidden sm:flex items-center gap-2 text-sm text-text-muted">
-          <span class="inline-flex items-center gap-1.5 bg-bg-warm px-3 py-1.5 rounded-full">
-            <span class="w-2 h-2 rounded-full bg-primary"></span>
-            {planner.selectedProgramCount} programů vybráno
-          </span>
-          <span class="inline-flex items-center gap-1.5 bg-bg-warm px-3 py-1.5 rounded-full">
-            <span class="w-2 h-2 rounded-full bg-cat-projects"></span>
-            {planner.totalAssignments} přiřazení
-          </span>
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+            <h1 class="text-xl font-bold text-text-dark font-heading">{t.planner.title}</h1>
+          </div>
         </div>
+        <p class="text-text-muted text-xs mt-0.5">{t.planner.subtitle}</p>
+      </div>
+      <div class="flex items-center gap-3">
+        {#if planner.assignedProgramCount > 0}
+          <span class="hidden md:inline-flex items-center gap-1.5 text-xs text-text-muted font-medium">
+            <span class="font-bold text-primary">{planner.assignedProgramCount}</span>
+            {t.planner.programsSelected}
+          </span>
+        {/if}
         <button
-          onclick={() => {
-            // TODO: Sprint 5 — otevrit poptavkovy formular
-            alert("Funkce bude dostupná v další verzi")
-          }}
-          class="bg-primary hover:bg-primary-hover text-bg-primary px-5 py-2.5 rounded-lg font-semibold text-sm transition-all inline-flex items-center gap-2"
+          onclick={() => alert(t.planner.featureComingSoon)}
+          class="bg-primary hover:bg-primary-hover text-bg-primary px-5 py-2.5 rounded-lg font-bold text-sm transition-all inline-flex items-center gap-2"
           disabled={planner.totalAssignments === 0}
           class:opacity-50={planner.totalAssignments === 0}
           class:cursor-not-allowed={planner.totalAssignments === 0}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
-          Odeslat poptávku
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
+          {t.planner.submitInquiry}
         </button>
       </div>
     </div>
   </div>
 
   <!-- Hlavni obsah: sidebar + kalendar -->
-  <div class="max-w-[1600px] mx-auto flex flex-col lg:flex-row">
+  <div class="w-full flex flex-col lg:flex-row">
     <!-- Sidebar -->
-    <aside class="w-full lg:w-[340px] lg:shrink-0 bg-white border-r border-border-light lg:sticky lg:top-[136px] lg:h-[calc(100vh-136px)] overflow-y-auto">
+    <aside class="w-full lg:w-[360px] lg:shrink-0 bg-white border-r border-border-light lg:sticky lg:top-[130px] lg:h-[calc(100vh-130px)] overflow-y-auto">
       <Sidebar {planner} />
     </aside>
 
     <!-- Kalendar -->
-    <div class="flex-1 p-4 sm:p-6 pb-24">
+    <div class="flex-1 p-4 sm:p-6 lg:p-8 pb-24">
+      <div class="mb-5">
+        <span class="text-[11px] font-bold uppercase tracking-widest text-text-muted/60">{t.planner.schoolYear}</span>
+      </div>
       <CalendarGrid {planner} />
     </div>
   </div>
 
   <!-- Spodni summary lista -->
-  {#if planner.selectedProgramCount > 0}
+  {#if planner.assignedProgramCount > 0}
     <SummaryBar {planner} />
   {/if}
 

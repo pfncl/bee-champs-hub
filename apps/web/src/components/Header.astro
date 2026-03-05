@@ -1,6 +1,7 @@
 ---
 import { navigation } from '@data/siteData';
 import { CalendarRange, Menu, X } from '@lucide/astro';
+import PlannerBadge from './planner/PlannerBadge.svelte';
 ---
 
 <header class="fixed flex items-center justify-center w-full z-50 bg-bg-primary/97 backdrop-blur-sm border-b border-border-primary h-[68px]">
@@ -28,10 +29,11 @@ import { CalendarRange, Menu, X } from '@lucide/astro';
         ))}
         <a
           href="/planovac"
-          class="border-2 border-primary text-primary hover:bg-primary hover:text-bg-primary rounded-lg font-semibold transition-all duration-200 inline-flex items-center justify-center gap-2 px-5 py-2"
+          class="bg-bg-tertiary hover:bg-white/15 text-white rounded-lg font-semibold transition-all duration-200 inline-flex items-center justify-center gap-2 px-5 py-2"
         >
-          <CalendarRange class="w-4 h-4" />
-          Roční plánovač
+          <CalendarRange class="w-4 h-4 text-white/70" />
+          Roční Plánovač
+          <PlannerBadge client:load />
         </a>
       </div>
 
@@ -39,10 +41,11 @@ import { CalendarRange, Menu, X } from '@lucide/astro';
       <div class="flex items-center gap-3 md:hidden">
         <a
           href="/planovac"
-          class="border-2 border-primary text-primary hover:bg-primary hover:text-bg-primary rounded-lg font-semibold transition-all duration-200 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm"
+          class="bg-primary hover:bg-primary-hover text-bg-primary rounded-lg font-semibold transition-all duration-200 inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm"
         >
           <CalendarRange class="w-4 h-4" />
           Plánovač
+          <PlannerBadge client:load />
         </a>
         <button
           id="mobile-menu-button"
