@@ -21,53 +21,69 @@
     }
     return groups
   })
+
+  let searchValue = $state(planner.searchQuery)
 </script>
 
-<div class="p-4 sm:p-5">
+<div class="p-5">
   <!-- Hlavicka -->
-  <div class="mb-4">
-    <h2 class="text-base font-bold text-text-dark font-heading">{t.planner.sidebar.title}</h2>
-    <p class="text-text-muted text-[11px] mt-0.5">{t.planner.sidebar.subtitle}</p>
+  <div class="mb-5">
+    <div class="flex items-center gap-2.5 mb-1">
+      <div class="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+      </div>
+      <div>
+        <h2 class="text-base font-bold text-text-dark font-heading">{t.planner.sidebar.title}</h2>
+        <p class="text-text-muted text-[11px]">{t.planner.sidebar.subtitle}</p>
+      </div>
+    </div>
   </div>
 
   <!-- Vyhledavani -->
-  <div class="relative mb-3">
-    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+  <div class="mb-4 relative">
+    <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-text-muted/50"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    </div>
     <input
       type="text"
       placeholder={t.planner.sidebar.searchPlaceholder}
-      value={planner.searchQuery}
-      oninput={(e) => planner.setSearchQuery(e.currentTarget.value)}
-      class="w-full pl-9 pr-3 py-2 rounded-lg border border-border-light bg-bg-warm/50 text-text-dark text-sm placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+      value={searchValue}
+      oninput={(e) => { searchValue = (e.currentTarget as HTMLInputElement).value; planner.setSearchQuery(searchValue) }}
+      class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border-light bg-white text-sm text-text-dark placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all"
     />
   </div>
 
   <!-- Filtrace kategorii -->
-  <div class="flex flex-wrap gap-1.5 mb-4">
+  <div class="flex flex-wrap gap-1.5 mb-5">
     {#each categoryFilters as filter}
       {@const isActive = planner.activeCategory === filter.slug}
       <button
         onclick={() => planner.setActiveCategory(filter.slug)}
         class="px-2.5 py-1 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5"
-        class:bg-bg-warm={isActive}
+        style:background-color={isActive ? (filter.slug === "all" ? "#F0EDE8" : `${filter.color}12`) : "transparent"}
         style:color={isActive ? (filter.slug === "all" ? "var(--color-text-dark)" : filter.color) : "var(--color-text-muted)"}
       >
-        <span class="w-2 h-2 rounded-full shrink-0" style:background-color={filter.slug === "all" ? "var(--color-text-muted)" : filter.color}></span>
+        <span
+          class="w-2 h-2 rounded-full shrink-0"
+          style:background-color={filter.slug === "all" ? "var(--color-text-muted)" : filter.color}
+        ></span>
         {filter.label}
       </button>
     {/each}
   </div>
 
   <!-- Seznam programu -->
-  <div class="space-y-3">
+  <div class="space-y-4">
     {#each groupedPrograms as group}
       <div>
         <!-- Hlavicka kategorie -->
-        <div class="flex items-center gap-1.5 mb-1.5 px-1">
-          <div class="w-1.5 h-1.5 rounded-full" style:background-color={group.color}></div>
+        <div class="flex items-center gap-2 mb-2 px-1">
+          <div class="w-2 h-2 rounded-full" style:background-color={group.color}></div>
           <span class="text-[10px] font-bold uppercase tracking-wider" style:color={group.color}>
             {group.name}
           </span>
+          <div class="h-px flex-1 bg-border-light"></div>
+          <span class="text-[10px] font-medium text-text-muted/50">{group.programs.length}</span>
         </div>
 
         <!-- Programy -->
@@ -77,20 +93,21 @@
             {@const monthCount = planner.getProgramMonths(program.id).length}
             <button
               onclick={() => planner.openModal(program.id)}
-              class="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all cursor-pointer hover:bg-bg-warm text-left"
-              class:bg-bg-warm={isAssigned}
-              style:border-left={isAssigned ? `3px solid ${group.color}` : "3px solid transparent"}
+              class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all cursor-pointer text-left group/item bg-bg-warm hover:bg-[#F5F0E8]"
+              class:!bg-[#F5F0E8]={isAssigned}
             >
-              <!-- Ikona + nazev -->
+              <!-- Ikona -->
               <span
-                class="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
+                class="w-9 h-9 rounded-xl flex items-center justify-center text-sm shrink-0"
                 style:background-color="{group.color}12"
               >{program.icon}</span>
+
+              <!-- Nazev + info -->
               <div class="flex-1 min-w-0">
-                <span class="text-[13px] font-medium text-text-dark truncate block">{program.name}</span>
+                <span class="text-[13px] font-semibold text-text-dark truncate block">{program.name}</span>
                 <span class="text-[10px] text-text-muted">
                   {#if monthCount > 0}
-                    {t.planner.sidebar.assignedCount.replace("{count}", String(monthCount))}
+                    <span class="font-semibold" style:color={group.color}>{t.planner.sidebar.assignedCount.replace("{count}", String(monthCount))}</span>
                   {:else}
                     {program.ageRange} · {program.duration}
                   {/if}
@@ -99,12 +116,12 @@
 
               <!-- Indikator stavu -->
               {#if isAssigned}
-                <span class="shrink-0 w-6 h-6 rounded-full flex items-center justify-center" style:background-color={group.color}>
+                <span class="shrink-0 w-7 h-7 rounded-full flex items-center justify-center" style:background-color={group.color}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                 </span>
               {:else}
-                <span class="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-text-muted/40 hover:text-primary hover:bg-primary/10 transition-all">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                <span class="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-text-muted/30 group-hover/item:text-primary transition-all">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                 </span>
               {/if}
             </button>
@@ -114,8 +131,11 @@
     {/each}
 
     {#if groupedPrograms.length === 0}
-      <div class="text-center py-6 text-text-muted text-sm">
-        {t.planner.sidebar.noResults}
+      <div class="text-center py-8">
+        <div class="w-12 h-12 mx-auto rounded-full bg-bg-warm flex items-center justify-center mb-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-text-muted/40"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </div>
+        <p class="text-text-muted text-sm">{t.planner.sidebar.noResults}</p>
       </div>
     {/if}
   </div>

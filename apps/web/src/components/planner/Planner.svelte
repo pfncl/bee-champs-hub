@@ -11,31 +11,33 @@
   let inquiryOpen = $state(false)
 </script>
 
-<div class="min-h-screen bg-bg-warm">
-  <!-- Horni lista -->
-  <div class="bg-white border-b border-border-light sticky top-[68px] z-30">
-    <div class="w-full px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+<div class="min-h-screen bg-[#F0EDE8]">
+  <!-- Horni lista - navy gradient -->
+  <div class="bg-gradient-to-r from-bg-primary to-bg-secondary sticky top-[68px] z-30 shadow-lg">
+    <div class="w-full px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
       <div>
         <div class="flex items-center gap-3">
-          <div class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
-            <h1 class="text-xl font-bold text-text-dark font-heading">{t.planner.title}</h1>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-white font-heading">{t.planner.title}</h1>
+            <p class="text-text-secondary text-xs">{t.planner.subtitle}</p>
           </div>
         </div>
-        <p class="text-text-muted text-xs mt-0.5">{t.planner.subtitle}</p>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-4">
         {#if planner.assignedProgramCount > 0}
-          <span class="hidden md:inline-flex items-center gap-1.5 text-xs text-text-muted font-medium">
-            <span class="font-bold text-primary">{planner.assignedProgramCount}</span>
-            {t.planner.programsSelected}
-          </span>
+          <div class="hidden md:flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1.5">
+            <span class="text-2xl font-bold text-primary font-heading">{planner.assignedProgramCount}</span>
+            <span class="text-xs text-text-secondary leading-tight">{t.planner.programsSelected}</span>
+          </div>
         {/if}
         <button
           onclick={() => inquiryOpen = true}
-          class="bg-primary hover:bg-primary-hover text-bg-primary px-5 py-2.5 rounded-lg font-bold text-sm transition-all inline-flex items-center gap-2"
+          class="bg-primary hover:bg-primary-hover text-bg-primary px-5 py-2.5 rounded-xl font-bold text-sm transition-all inline-flex items-center gap-2 shadow-md hover:shadow-lg hover:scale-[1.02]"
           disabled={planner.totalAssignments === 0}
-          class:opacity-50={planner.totalAssignments === 0}
+          class:opacity-40={planner.totalAssignments === 0}
           class:cursor-not-allowed={planner.totalAssignments === 0}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
@@ -48,14 +50,16 @@
   <!-- Hlavni obsah: sidebar + kalendar -->
   <div class="w-full flex flex-col lg:flex-row">
     <!-- Sidebar -->
-    <aside class="w-full lg:w-[360px] lg:shrink-0 bg-white border-r border-border-light lg:sticky lg:top-[130px] lg:h-[calc(100vh-130px)] overflow-y-auto">
+    <aside class="w-full lg:w-[380px] lg:shrink-0 bg-white border-r border-black/[0.06] lg:sticky lg:top-[136px] lg:h-[calc(100vh-136px)] overflow-y-auto shadow-sm">
       <Sidebar {planner} />
     </aside>
 
     <!-- Kalendar -->
-    <div class="flex-1 p-4 sm:p-6 lg:p-8 pb-24">
-      <div class="mb-5">
-        <span class="text-[11px] font-bold uppercase tracking-widest text-text-muted/60">{t.planner.schoolYear}</span>
+    <div class="flex-1 p-4 sm:p-6 lg:p-8 pb-28">
+      <div class="mb-6 flex items-center gap-3">
+        <div class="h-px flex-1 bg-gradient-to-r from-primary/40 to-transparent"></div>
+        <span class="text-[11px] font-bold uppercase tracking-[0.2em] text-text-muted/70 bg-[#F0EDE8] px-3">{t.planner.schoolYear}</span>
+        <div class="h-px flex-1 bg-gradient-to-l from-primary/40 to-transparent"></div>
       </div>
       <CalendarGrid {planner} />
     </div>

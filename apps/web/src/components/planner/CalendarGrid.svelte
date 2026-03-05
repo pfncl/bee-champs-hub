@@ -5,36 +5,37 @@
   let { planner }: { planner: ReturnType<typeof usePlanner> } = $props()
 </script>
 
-<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
   {#each SCHOOL_MONTHS as month}
     {@const monthPrograms = planner.getMonthPrograms(month.index)}
-    <div class="bg-white rounded-xl border border-border-light/60 overflow-hidden hover:shadow-lg transition-all duration-200 group/month">
+    {@const hasPrograms = monthPrograms.length > 0}
+    <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 group/month">
       <!-- Hlavicka mesice -->
-      <div class="px-4 py-3 flex items-center justify-between">
-        <h3 class="text-lg font-bold text-text-dark font-heading">{month.name}</h3>
-        {#if monthPrograms.length > 0}
-          <span class="text-xs text-primary font-medium">
+      <div class="bg-[#35404F] px-4 py-3 flex items-center justify-between">
+        <h3 class="text-base font-bold text-white font-heading">{month.name}</h3>
+        {#if hasPrograms}
+          <span class="bg-white/15 text-white/90 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
             {monthPrograms.length} {monthPrograms.length === 1 ? "akce" : monthPrograms.length < 5 ? "akce" : "akci"}
           </span>
         {/if}
       </div>
 
       <!-- Obsah mesice -->
-      <div class="px-4 pb-3 min-h-[80px]">
-        {#if monthPrograms.length > 0}
+      <div class="px-4 pb-3 pt-3 min-h-[90px]">
+        {#if hasPrograms}
           <div class="space-y-1.5">
             {#each monthPrograms as program}
               {@const color = getCategoryColor(program.category)}
               <div
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-all group/tag"
-                style:background-color="{color}10"
+                style:background-color="{color}0A"
               >
                 <span class="w-2 h-2 rounded-full shrink-0" style:background-color={color}></span>
                 <span class="text-xs shrink-0">{program.icon}</span>
                 <span class="text-[13px] font-medium text-text-dark truncate flex-1">{program.name}</span>
                 <button
                   onclick={() => planner.removeProgramFromMonth(program.id, month.index)}
-                  class="w-5 h-5 rounded flex items-center justify-center opacity-0 group-hover/tag:opacity-100 text-text-muted hover:text-cat-events hover:bg-cat-events/10 transition-all shrink-0"
+                  class="w-5 h-5 rounded flex items-center justify-center opacity-0 group-hover/tag:opacity-100 text-text-muted hover:text-cat-events transition-all shrink-0"
                   title={t.planner.modal.close}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -43,17 +44,17 @@
             {/each}
           </div>
         {/if}
-      </div>
 
-      <!-- Pridat program -->
-      <div class="px-4 pb-3">
-        <button
-          onclick={() => planner.openModal(`__month__${month.index}`)}
-          class="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-border-light text-text-muted/60 text-xs font-medium hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-          {t.planner.calendar.addProgram}
-        </button>
+        <!-- Pridat program -->
+        <div class:mt-2={hasPrograms} class:mt-0={!hasPrograms}>
+          <button
+            onclick={() => planner.openModal(`__month__${month.index}`)}
+            class="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-border-light text-text-muted/60 text-xs font-medium hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            {t.planner.calendar.addProgram}
+          </button>
+        </div>
       </div>
     </div>
   {/each}
