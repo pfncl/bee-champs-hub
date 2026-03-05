@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "bee-champs-hub-web",
+  "account_id": "a6f73612807840e33437c92d3771f8be",
+  "main": "dist/_worker.js/index.js",
+  "compatibility_date": "2026-03-05",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./dist"
+  },
+  "observability": {
+    "enabled": true
+  },
+
+  "vars": {
+    "PUBLIC_API_URL": "https://api.beechampshub.cz"
+  },
+
+  // D1 pro poptávky
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "bee-champs-db",
+      "database_id": "0462ef41-dd80-47e5-baa5-7e8814546e14"
+    }
+  ]
+}
