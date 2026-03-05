@@ -1,78 +1,88 @@
 # Bee Champs Hub - Sprinty
 
-## Sprint 0: Zakladni infrastruktura
+## Sprint 0: Zakladni infrastruktura [HOTOVO]
 **Kapitola:** 9 (Technicke pozadavky)
 **Cil:** Inicializace monorepa, tech stack, zakladni konfigurace
 
 ### Ukoly:
-- [ ] Inicializace pnpm monorepa (pnpm-workspace.yaml)
-- [ ] Vytvoreni `apps/web` — Astro 5 + Svelte 5 + Tailwind CSS v4 + Cloudflare adapter
-- [ ] Vytvoreni `apps/api` — Hono + Effect + Cloudflare Workers
-- [ ] Vytvoreni `packages/shared` — sdilene typy, konstanty (programy, kategorie, barvy)
-- [ ] Vytvoreni `packages/db` — Drizzle ORM schema (poptavky)
-- [ ] Root tsconfig.json (strict, ES2022)
+- [x] Inicializace pnpm monorepa (pnpm-workspace.yaml)
+- [x] Vytvoreni `apps/web` — Astro 5 + Svelte 5 + Tailwind CSS v4 + Cloudflare adapter
+- [x] Vytvoreni `apps/api` — Hono + Effect + Cloudflare Workers
+- [x] Vytvoreni `packages/shared` — sdilene typy, konstanty (programy, kategorie, barvy)
+- [x] Vytvoreni `packages/db` — Drizzle ORM schema (poptavky)
+- [x] Root tsconfig.json (strict, ES2022)
 - [ ] ESLint konfigurace s Effect pravidly
-- [ ] Overeni `pnpm dev` funguje pro web i API
-- [ ] Design reference: prevzit strukturu z Astro Gym sablony (Layout, global.css, @theme)
-- [ ] Nastavit Bee Champs barevnou paletu v Tailwind @theme (navy #0D1B2E, zlata #F5A623, atd.)
-- [ ] Nastavit fonty Syne + DM Sans (Google Fonts)
+- [x] Overeni `pnpm dev` funguje pro web i API
+- [x] Design reference: prevzit strukturu z Astro Gym sablony (Layout, global.css, @theme)
+- [x] Nastavit Bee Champs barevnou paletu v Tailwind @theme (navy #0D1B2E, zlata #F5A623, atd.)
+- [x] Nastavit fonty Syne + DM Sans (Google Fonts)
 
 ---
 
-## Sprint 1: Navigace a Layout
+## Sprint 1: Navigace a Layout [HOTOVO]
 **Kapitola:** 2 (Navigacni lista)
 **Cil:** Fixni navbar, layout, footer — kostra webu
 
 ### Ukoly:
-- [ ] Layout.astro — zakladni HTML kostra (head, meta, fonty, slot)
-- [ ] Header.astro — fixni navbar 68px, tmave pruhledne pozadi s blur
-- [ ] Logo Bee Champs Hub (emoji vcela + text, "Hub" zlate)
-- [ ] Navigacni odkazy: Sport, Vzdelavani, Projektove dny, Akce
-- [ ] Tlacitko "Rocni planovac" se zlatym rameckem + badge s poctem
-- [ ] Mobilni menu (hamburger) — skryje textove odkazy, zobrazi logo + planovac
-- [ ] Footer.astro — tmave pozadi, zlata horni linka, 3 sloupce odkazu
-- [ ] SPA navigace — Astro View Transitions nebo client-side routing
+- [x] Layout.astro — zakladni HTML kostra (head, meta, fonty, slot)
+- [x] Header.astro — fixni navbar 68px, tmave pruhledne pozadi s blur
+- [x] Logo Bee Champs Hub (hexagon SVG + text, "Hub" zlate)
+- [x] Navigacni odkazy: Sport, Vzdelavani, Projektove dny, Akce
+- [x] Tlacitko "Rocni planovac" se zlatym rameckem
+- [x] Mobilni menu (hamburger) — skryje textove odkazy, zobrazi logo + planovac
+- [x] Footer.astro — tmave pozadi, 4 sloupce odkazu
+- [ ] SPA navigace — Astro View Transitions (presunuto do Sprint 6)
 
 ---
 
-## Sprint 2: Uvodni stranka (Home)
+## Sprint 2: Uvodni stranka (Home) [HOTOVO]
 **Kapitola:** 3 (Stranka 1)
-**Cil:** Kompletni uvodni stranka se vsemi 6 sekcemi
+**Cil:** Kompletni uvodni stranka se vsemi sekcemi
 
 ### Ukoly:
-- [ ] 3.1 Hero sekce — cela vyska viewportu, tmave pozadi, barevne bloby, hexagony
-  - Badge "Platforma pro MS a ZS"
-  - Hlavni nadpis se zlatym zvyraznenim
-  - Podtitul
-  - 2 CTA tlacitka (zlate + pruhledne)
-  - 3 statistiky (240+, 85, 98%)
-  - Fade-up animace pri nacteni
-- [ ] 3.2 Sekce ctyr kategorii — grid 2x2, karticky s hover efektem
-  - Barevne ikony, labely, tagy, odkazy
-  - Data z packages/shared (programy)
-- [ ] 3.3 Sekce "Jak to funguje" — tmave pozadi, 4 kroky
-  - Cisla jako velky polopruhledny zlaty text
-- [ ] 3.4 Sekce Reference — 3 recenzni karticky
-- [ ] 3.5 CTA sekce — tmave pozadi, vceli emoji, zlate tlacitko
-- [ ] 3.6 Footer (uz z Sprint 1)
+- [x] HeroSection — dvousloupcovy layout: text vlevo, obrazek vpravo
+  - Nadpis se zlatym zvyraznenim
+  - Plovouci karticka "Snadne planovani" s CircleCheckBig ikonou
+  - 2 CTA tlacitka (zlate s glow + pruhledne)
+  - 3 statistiky (50+, 100+, 10k+)
+  - Dekorativni bloby
+- [x] CategoriesSection — grid 4 sloupce, Lucide ikony (Dumbbell, BookOpen, CalendarDays, Tent)
+  - Jemne bordery (border-black/[0.06])
+  - Hover efekt, barevne ikony dle kategorie
+- [x] HowItWorksSection — tmave pozadi, 4 kroky s Lucide ikonami
+- [x] TestimonialsSection — 3 recenzni karticky s hvezdickami
+- [x] CtaSection — tmave pozadi, hexagon SVG, zlate tlacitko
 
 ---
 
-## Sprint 3: Detail kategorie
+## Sprint 3: Detail kategorie [HOTOVO]
 **Kapitola:** 4 (Stranka 2)
 **Cil:** 4 dynamicke stranky kategorii s programy
 
 ### Ukoly:
-- [ ] Data: kompletni seznam 26 programu se vsemi metadaty v packages/shared
-  - 8 Sport, 7 Vzdelavani, 5 Projektove dny, 6 Akce a pobyty
-  - Kazdy: nazev, emoji, popis, vek, delka, pocet lektoru, barva kategorie
-- [ ] 4.1 Hero sekce kategorie — tmave pozadi + barevny blob dle kategorie
-  - Tlacitko zpet, ikona, nadpis, popis
-- [ ] 4.2 Mrizka podprogramu — grid 3 sloupce
-  - Barevny header s emoji, nazev, popis, metadata tagy
-  - Tlacitko "+ Pridat do planovace" (otevre modal)
-  - Hover efekt (translateY + stin)
-- [ ] Dynamicke routovani — /sport, /vzdelavani, /projektove-dny, /akce
+- [x] Data: kompletni seznam 26 programu v packages/shared
+- [x] [category].astro — dynamicka stranka s prerender + getStaticPaths
+- [x] Hero sekce kategorie — tmave pozadi, ikona, nadpis, popis, tlacitko zpet
+- [x] ProgramCard.astro — karta programu s Lucide metadata ikonami
+  - Ikona, nazev, popis, metadata (vek, delka, lektori)
+  - Tlacitko "+ Pridat do planovace"
+- [x] 4 stranky: /sport (8), /vzdelavani (7), /projektove-dny (5), /akce (6)
+
+---
+
+## Sprint 3.5: Cloudflare deployment [HOTOVO]
+**Cil:** Nasazeni na Cloudflare Workers
+
+### Ukoly:
+- [x] wrangler.jsonc pro apps/web (Astro SSR + assets)
+- [x] wrangler.jsonc pro apps/api (Hono worker)
+- [x] D1 databaze bee-champs-db (ID: 0462ef41-dd80-47e5-baa5-7e8814546e14, EEUR)
+- [x] .assetsignore pro _worker.js
+- [x] Deploy: bee-champs-hub-web + bee-champs-hub-api
+
+### Deploy URL:
+- Web: https://bee-champs-hub-web.webmaster4329.workers.dev/
+- API: https://bee-champs-hub-api.webmaster4329.workers.dev/health
 
 ---
 
@@ -101,7 +111,7 @@
 - [ ] Responsivita: tablet (sidebar nad kalendarem), mobil (1 sloupec)
 
 ### Poznamka:
-Toto je Svelte 5 interaktivni komponenta — nejslozitejsi cast webu. Pouzit Svelte stores/runes pro stav.
+Toto je Svelte 5 interaktivni komponenta — nejslozitejsi cast webu. Pouzit Svelte 5 runes ($state, $derived) pro stav.
 
 ---
 
@@ -111,18 +121,10 @@ Toto je Svelte 5 interaktivni komponenta — nejslozitejsi cast webu. Pouzit Sve
 
 ### Ukoly:
 - [ ] 6.1 Prehled vybranych programu — automaticky z planovace
-  - Kremovy box, barevne tecky, emoji, nazev, mesic
-- [ ] 6.2 Formularova pole
-  - Zakladni info: nazev skoly, typ instituce (dropdown), mesto, pocet deti, vek
-  - Kontaktni osoba: jmeno, pozice, telefon, email
-  - Doplnujici info: telocvicna, hriste (dropdown), poznamky
-  - Validace povinnych poli
-- [ ] 6.3 Odeslani formulare
-  - API endpoint (Hono + Effect) pro prijem poptavky
-  - Ulozeni do DB (Drizzle + D1)
-  - Odeslani emailu (EmailJS nebo Resend)
-  - Uspesna obrazovka "Poptavka odeslana!"
-- [ ] Formular jde odeslat i bez predchoziho vyberu (volny text v Poznamkach)
+- [ ] 6.2 Formularova pole (skola, kontakt, doplnujici info)
+- [ ] 6.3 API endpoint (Hono + Effect) pro prijem poptavky
+- [ ] 6.4 Ulozeni do DB (Drizzle + D1)
+- [ ] 6.5 Uspesna obrazovka
 
 ---
 
@@ -131,18 +133,10 @@ Toto je Svelte 5 interaktivni komponenta — nejslozitejsi cast webu. Pouzit Sve
 **Cil:** Dokonceni SPA chovani, animace, responsivita
 
 ### Ukoly:
-- [ ] 7.1 SPA navigace — prechody bez refreshe, scroll nahoru
+- [ ] 7.1 SPA navigace — Astro View Transitions
 - [ ] 7.2 Stav planovace — zachovani pri navigaci
-- [ ] 7.3 Animace
-  - Hero fade-up (staggered)
-  - Karty hover (translateY + shadow)
-  - Modaly (scale + translateY)
-  - Hexagony pulzovani
-  - Badge zobrazeni/skryti
-- [ ] 7.4 Responsivita
-  - Desktop (1200px+) — plne rozlozeni
-  - Tablet (800-1200px) — sidebar nad kalendarem, grid 2 sloupce
-  - Mobil (pod 800px) — 1 sloupec, jen logo + planovac v nav
+- [ ] 7.3 Animace (fade-up, hover, modaly, hexagony)
+- [ ] 7.4 Responsivita (desktop, tablet, mobil)
 
 ---
 
@@ -155,7 +149,6 @@ Toto je Svelte 5 interaktivni komponenta — nejslozitejsi cast webu. Pouzit Sve
 - [ ] GDPR cookie lista
 - [ ] Google Analytics 4 / Plausible
 - [ ] Sitemap (Astro sitemap integrace)
-- [ ] Cloudflare deploy (Pages + Workers)
 - [ ] Vlastni domena + SSL
 - [ ] Testovani (Vitest pro API, manualni QA pro web)
 - [ ] Lighthouse audit (performance, accessibility)
