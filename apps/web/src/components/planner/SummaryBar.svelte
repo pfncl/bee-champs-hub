@@ -2,7 +2,7 @@
   import { t } from "../../i18n"
   import { getCategoryColor, type usePlanner } from "./plannerState.svelte"
 
-  let { planner }: { planner: ReturnType<typeof usePlanner> } = $props()
+  let { planner, oninquiry }: { planner: ReturnType<typeof usePlanner>; oninquiry: () => void } = $props()
 </script>
 
 <div class="fixed bottom-0 left-0 right-0 z-40 bg-bg-primary border-t border-border-primary">
@@ -38,7 +38,7 @@
         {t.planner.summary.clearAll}
       </button>
       <button
-        onclick={() => alert(t.planner.featureComingSoon)}
+        onclick={oninquiry}
         class="bg-primary hover:bg-primary-hover text-bg-primary px-4 py-2 rounded-lg font-bold text-sm transition-all"
         disabled={planner.totalAssignments === 0}
         class:opacity-50={planner.totalAssignments === 0}

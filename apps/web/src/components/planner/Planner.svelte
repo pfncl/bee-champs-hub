@@ -4,9 +4,11 @@
   import Sidebar from "./Sidebar.svelte"
   import CalendarGrid from "./CalendarGrid.svelte"
   import MonthAssignModal from "./MonthAssignModal.svelte"
+  import InquiryModal from "./InquiryModal.svelte"
   import SummaryBar from "./SummaryBar.svelte"
 
   const planner = usePlanner()
+  let inquiryOpen = $state(false)
 </script>
 
 <div class="min-h-screen bg-bg-warm">
@@ -30,7 +32,7 @@
           </span>
         {/if}
         <button
-          onclick={() => alert(t.planner.featureComingSoon)}
+          onclick={() => inquiryOpen = true}
           class="bg-primary hover:bg-primary-hover text-bg-primary px-5 py-2.5 rounded-lg font-bold text-sm transition-all inline-flex items-center gap-2"
           disabled={planner.totalAssignments === 0}
           class:opacity-50={planner.totalAssignments === 0}
@@ -61,11 +63,16 @@
 
   <!-- Spodni summary lista -->
   {#if planner.assignedProgramCount > 0}
-    <SummaryBar {planner} />
+    <SummaryBar {planner} oninquiry={() => inquiryOpen = true} />
   {/if}
 
   <!-- Modal prirazeni mesicu -->
   {#if planner.modalOpen && planner.modalProgramId}
     <MonthAssignModal {planner} />
+  {/if}
+
+  <!-- Modal poptavky -->
+  {#if inquiryOpen}
+    <InquiryModal {planner} onclose={() => inquiryOpen = false} />
   {/if}
 </div>
