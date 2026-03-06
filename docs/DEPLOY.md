@@ -1,51 +1,51 @@
-# Bee Champs Hub - Navod k nasazeni (Deploy)
+# Bee Champs Hub — Návod k nasazení (Deploy)
 
-Tento dokument popisuje jak nasadit Bee Champs Hub na Cloudflare. Cely projekt bezi jako **jeden Cloudflare Worker** — web (Astro SSR) i API endpointy (Effect TS) jsou soucasti jednoho workeru.
+Tento dokument popisuje jak nasadit Bee Champs Hub na Cloudflare. Celý projekt běží jako **jeden Cloudflare Worker** — web (Astro SSR) i API endpointy (Effect TS) jsou součástí jednoho workeru.
 
 ## Prerekvizity
 
-- **Node.js** >= 20
+- **Node.js** >= 24
 - **pnpm** >= 10 (`npm install -g pnpm`)
-- **Cloudflare ucet** (zdarma staci)
-- **Wrangler CLI** (nainstalovany jako devDependency)
+- **Cloudflare účet** (zdarma stačí)
+- **Wrangler CLI** (nainstalovaný jako devDependency)
 
 ## Architektura
 
 ```
 Cloudflare Worker: bee-champs-hub-web
-├── Astro SSR stranky (/, /planovac, /admin, ...)
+├── Astro SSR stránky (/, /planovac, /admin, ...)
 ├── API endpointy (/api/*)
-├── Cloudflare D1 databaze (SQLite)
-└── Static assets (CSS, JS, obrazky)
+├── Cloudflare D1 databáze (SQLite)
+└── Static assets (CSS, JS, obrázky)
 ```
 
-Neni zadny oddeleny API worker — vse bezi v jednom.
+Není žádný oddělený API worker — vše běží v jednom.
 
-## 1. Cloudflare ucet a nastroje
+## 1. Cloudflare účet a nástroje
 
-### Prihlaseni pres Wrangler
+### Přihlášení přes Wrangler
 
 ```bash
 npx wrangler login
 ```
 
-Otevri se prohlizec, prihlaste se do Cloudflare a autorizujte Wrangler.
+Otevře se prohlížeč, přihlaste se do Cloudflare a autorizujte Wrangler.
 
-### Zjisteni Account ID
+### Zjištění Account ID
 
 ```bash
 npx wrangler whoami
 ```
 
-Account ID je v `wrangler.jsonc` — pokud deploujete na jiny ucet, zmente `account_id`.
+Account ID je v `wrangler.jsonc` — pokud deploujete na jiný účet, změňte `account_id`.
 
-## 2. Vytvoreni D1 databaze
+## 2. Vytvoření D1 databáze
 
 ```bash
 npx wrangler d1 create bee-champs-db
 ```
 
-Vystup ukaze `database_id` — vlozte ho do `wrangler.jsonc`:
+Výstup ukáže `database_id` — vložte ho do `wrangler.jsonc`:
 
 ```jsonc
 "d1_databases": [
@@ -58,54 +58,54 @@ Vystup ukaze `database_id` — vlozte ho do `wrangler.jsonc`:
 ]
 ```
 
-### Vytvoreni KV namespace (pro Astro sessions)
+### Vytvoření KV namespace (pro Astro sessions)
 
 ```bash
 npx wrangler kv namespace create SESSION
 ```
 
-Vystup ukaze `id` — vlozte ho do `wrangler.jsonc` misto `SESSION_KV_ID`.
+Výstup ukáže `id` — vložte ho do `wrangler.jsonc` místo `SESSION_KV_ID`.
 
-### Spusteni migrace
+### Spuštění migrace
 
 ```bash
 npx wrangler d1 migrations apply bee-champs-db --remote
 ```
 
-Toto vytvori tabulky v produkcni D1 databazi.
+Toto vytvoří tabulky v produkční D1 databázi.
 
-## 3. Nastaveni secrets
+## 3. Nastavení secrets
 
-Secrets se nastavi pres CLI — NIKDY je nedavejte do kodu nebo wrangler.jsonc:
+Secrets se nastaví přes CLI — NIKDY je nedávejte do kódu nebo wrangler.jsonc:
 
 ```bash
-# Admin prihlasovaci token (libovolny bezpecny retezec)
+# Admin přihlašovací token (libovolný bezpečný řetězec)
 npx wrangler secret put ADMIN_TOKEN
 
-# Superadmin prihlasovaci token
+# Superadmin přihlašovací token
 npx wrangler secret put SUPERADMIN_TOKEN
 
-# Resend API klic pro odesilani emailu (https://resend.com)
+# Resend API klíč pro odesílání emailů (https://resend.com)
 npx wrangler secret put RESEND_API_KEY
 
-# Cloudflare API token (pro superadmin nastroje — logy, export DB, cache purge)
+# Cloudflare API token (pro superadmin nástroje — logy, export DB, cache purge)
 npx wrangler secret put CF_API_TOKEN
 ```
 
-Kazdy prikaz vas vyzve k zadani hodnoty.
+Každý příkaz vás vyzve k zadání hodnoty.
 
-### Jak ziskat tokeny
+### Jak získat tokeny
 
-- **ADMIN_TOKEN / SUPERADMIN_TOKEN**: Vygenerujte nahodny retezec, napr. `openssl rand -hex 32`
-- **RESEND_API_KEY**: Zaregistrujte se na [resend.com](https://resend.com), vytvorte API klic
-- **CF_API_TOKEN**: V Cloudflare dashboard > My Profile > API Tokens > Create Token. Potrebuje opravneni: `Account > Workers Scripts > Edit`, `Account > D1 > Edit`
+- **ADMIN_TOKEN / SUPERADMIN_TOKEN**: Vygenerujte náhodný řetězec, např. `openssl rand -hex 32`
+- **RESEND_API_KEY**: Zaregistrujte se na [resend.com](https://resend.com), vytvořte API klíč
+- **CF_API_TOKEN**: V Cloudflare dashboard > My Profile > API Tokens > Create Token. Potřebuje oprávnění: `Account > Workers Scripts > Edit`, `Account > D1 > Edit`
 
 ## 4. Build a deploy
 
 ```bash
-# Z korene repozitare
+# Z kořene repozitáře
 pnpm install
-pnpm deploy
+pnpm run deploy
 ```
 
 To je ekvivalent:
@@ -113,9 +113,11 @@ To je ekvivalent:
 pnpm --filter @bee-champs/web build && wrangler deploy
 ```
 
-Po uspesnem deployi se v terminalu zobrazi URL workeru (napr. `https://bee-champs-hub-web.UZIVATEL.workers.dev`).
+Po úspěšném deployi se v terminálu zobrazí URL workeru (např. `https://bee-champs-hub-web.UZIVATEL.workers.dev`).
 
-## 5. Custom domena (volitelne)
+**Pozor:** `pnpm deploy` je rezervovaný příkaz pnpm — vždy používejte `pnpm run deploy`.
+
+## 5. Custom doména (volitelné)
 
 V `wrangler.jsonc` je sekce `routes`:
 
@@ -125,23 +127,23 @@ V `wrangler.jsonc` je sekce `routes`:
 ]
 ```
 
-Podminka: domena musi byt pridana v Cloudflare DNS (staci Free plan). Po deploy se automaticky vytvori DNS zaznam.
+Podmínka: doména musí být přidaná v Cloudflare DNS (stačí Free plan). Po deploy se automaticky vytvoří DNS záznam.
 
-## 6. Lokalni vyvoj
+## 6. Lokální vývoj
 
 ```bash
-# Nainstalovat zavislosti
+# Nainstalovat závislosti
 pnpm install
 
 # Spustit dev server (Astro + Wrangler)
 pnpm dev
 ```
 
-Dev server bezi na `http://localhost:4321`. Pouziva lokalni D1 databazi (soubor v `.wrangler/`).
+Dev server běží na `http://localhost:4321`. Používá lokální D1 databázi (soubor v `.wrangler/`).
 
-### Lokalni secrets
+### Lokální secrets
 
-Vytvorte soubor `apps/web/.dev.vars`:
+Vytvořte soubor `apps/web/.dev.vars`:
 
 ```
 ADMIN_TOKEN=test-admin-token
@@ -150,17 +152,17 @@ RESEND_API_KEY=re_xxxxx
 CF_API_TOKEN=xxxxx
 ```
 
-Tento soubor je v `.gitignore` a pouziva se pouze lokalne.
+Tento soubor je v `.gitignore` a používá se pouze lokálně.
 
-## 7. Databazove migrace
+## 7. Databázové migrace
 
-Schema je v `packages/db/src/schema/`. Pokud zmenite schema:
+Schéma je v `packages/db/src/schema/`. Pokud změníte schéma:
 
 ```bash
 # Vygenerovat migraci
 pnpm db:generate
 
-# Aplikovat lokalne
+# Aplikovat lokálně
 npx wrangler d1 migrations apply bee-champs-db --local
 
 # Aplikovat na produkci
@@ -171,32 +173,32 @@ npx wrangler d1 migrations apply bee-champs-db --remote
 
 ```
 bee-champs/
-├── wrangler.jsonc          # Cloudflare konfigurace (koren)
+├── wrangler.jsonc          # Cloudflare konfigurace (kořen)
 ├── apps/
 │   └── web/              # Astro 5 + Svelte 5 + API (Effect TS)
 │       ├── src/
-│       │   ├── api/      # Sdileny API kod (runtime, auth, db, errors, schemas)
+│       │   ├── api/      # Sdílený API kód (runtime, auth, db, errors, schemas)
 │       │   ├── pages/
 │       │   │   ├── api/  # API endpointy (Astro server endpoints)
 │       │   │   ├── admin/   # Admin panel
-│       │   │   └── ...      # Verejne stranky
+│       │   │   └── ...      # Veřejné stránky
 │       │   ├── components/  # Svelte 5 komponenty
 │       │   └── layouts/     # Astro layouty
-│       └── .dev.vars        # Lokalni secrets (ne v gitu)
+│       └── .dev.vars        # Lokální secrets (ne v gitu)
 ├── packages/
-│   ├── shared/           # Sdilene typy, kategorie, programy
-│   └── db/               # Drizzle schema + migrace
+│   ├── shared/           # Sdílené typy, kategorie, programy
+│   └── db/               # Drizzle schéma + migrace
 └── docs/                 # Dokumentace
 ```
 
-## 9. Dulezite URL
+## 9. Důležité URL
 
-- **Produkcni web**: URL z wrangler deploy nebo custom domena
-- **Admin panel**: `/admin` (chraneno tokenem)
-- **Superadmin**: `/superadmin` (chraneno tokenem)
+- **Produkční web**: URL z wrangler deploy nebo custom doména
+- **Admin panel**: `/admin` (chráněno tokenem)
+- **Superadmin**: `/superadmin` (chráněno tokenem)
 - **API health check**: `/api/health`
 
-## Reseni problemu
+## Řešení problémů
 
-### D1 migrace selhava
-Zkontrolujte ze `database_id` v wrangler.jsonc odpovida skutecne D1 databazi. Overeni: `npx wrangler d1 list`.
+### D1 migrace selhává
+Zkontrolujte že `database_id` v wrangler.jsonc odpovídá skutečné D1 databázi. Ověření: `npx wrangler d1 list`.
