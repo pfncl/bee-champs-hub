@@ -10,7 +10,7 @@
     "test": "pnpm -r test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "deploy": "pnpm --filter @bee-champs/web run build && wrangler d1 migrations apply DB --remote && wrangler deploy",
+    "deploy": "pnpm --filter @bee-champs/web run build && npx wrangler d1 migrations apply DB --remote && npx wrangler deploy",
     "db:generate": "pnpm --filter @bee-champs/db generate",
     "typecheck": "tsc -p apps/web/tsconfig.json --noEmit"
   },
@@ -41,6 +41,7 @@
     }
   },
   "devDependencies": {
+    "wrangler": "^4.70.0",
     "@codeforbreakfast/eslint-effect": "^0.8.5",
     "@eslint/compat": "^2.0.2",
     "eslint": "^10.0.0",
