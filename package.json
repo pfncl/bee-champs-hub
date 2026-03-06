@@ -10,7 +10,7 @@
     "test": "pnpm -r test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "deploy": "pnpm --filter @bee-champs/web run build && npx wrangler d1 migrations apply DB --remote && npx wrangler deploy",
+    "deploy": "pnpm --filter @bee-champs/web run build && npx wrangler d1 migrations apply DB --remote && npx wrangler d1 execute DB --remote --file=packages/db/seed.sql --yes && npx wrangler deploy",
     "db:generate": "pnpm --filter @bee-champs/db generate",
     "typecheck": "tsc -p apps/web/tsconfig.json --noEmit"
   },
