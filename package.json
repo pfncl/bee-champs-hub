@@ -1,6 +1,7 @@
 {
   "name": "bee-champs-hub",
   "private": true,
+  "packageManager": "pnpm@10.30.3",
   "type": "module",
   "scripts": {
     "dev": "pnpm --filter @bee-champs/web dev",

@@ -1,35 +1,57 @@
 # Bee Champs Hub — Návod k nasazení (Deploy)
 
-Tento dokument popisuje jak nasadit Bee Champs Hub na Cloudflare. Celý projekt běží jako **jeden Cloudflare Worker** — web (Astro SSR) i API endpointy (Effect TS) jsou součástí jednoho workeru.
+Celý projekt běží jako **jeden Cloudflare Worker** — web (Astro SSR) i API endpointy (Effect TS) jsou součástí jednoho workeru.
 
-## Prerekvizity
+## Rychlý deploy (tlačítko)
+
+Nejjednodušší způsob nasazení — klikněte na tlačítko v README:
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/pfncl/bee-champs-hub)
+
+Cloudflare automaticky:
+1. **Naklonuje repo** do vašeho GitHub účtu
+2. **Vytvoří KV namespace** a **D1 databázi** — stačí pojmenovat nebo nechat výchozí
+3. **Zobrazí formulář pro secrets** — vyplňte:
+
+| Secret | Kde ho získat |
+|---|---|
+| `ADMIN_TOKEN` | Vygenerujte: `openssl rand -hex 32` |
+| `SUPERADMIN_TOKEN` | Vygenerujte: `openssl rand -hex 32` |
+| `RESEND_API_KEY` | Vytvořte na [resend.com](https://resend.com) |
+| `CF_API_TOKEN` | Vytvořte v [Cloudflare dashboard](https://dash.cloudflare.com/profile/api-tokens) — oprávnění: `Workers Scripts > Edit`, `D1 > Edit` |
+
+4. **Nastaví env proměnné** `ENVIRONMENT` a `APP_URL` — změňte `APP_URL` na vaši doménu
+5. **Spustí build a deploy** — včetně D1 migrací
+
+Po dokončení máte funkční aplikaci na `https://bee-champs-hub-web.UZIVATEL.workers.dev`.
+
+---
+
+## Manuální deploy (CLI)
+
+Pokud nechcete použít tlačítko, můžete nasadit ručně.
+
+### 1. Prerekvizity
 
 - **Node.js** >= 24
 - **pnpm** >= 10 (`npm install -g pnpm`)
 - **Cloudflare účet** (zdarma stačí)
-- **Wrangler CLI** (nainstalovaný jako devDependency)
 
-## Architektura
+### 2. Přihlášení
 
-```
-Cloudflare Worker: bee-champs-hub-web
-├── Astro SSR stránky (/, /planovac, /admin, ...)
-├── API endpointy (/api/*)
-├── Cloudflare D1 databáze (SQLite)
-└── Static assets (CSS, JS, obrázky)
+```bash
+npx wrangler login
 ```
 
-Není žádný oddělený API worker — vše běží v jednom.
+### 3. Konfigurace wrangler.jsonc
 
-## 1. Konfigurace wrangler.jsonc
-
-Soubor `wrangler.jsonc` je v repu s placeholder hodnotami (pro Deploy to Cloudflare button). Pro lokální vývoj a produkci vyplňte své hodnoty:
+Soubor `wrangler.jsonc` je v repu s placeholder hodnotami. Vyplňte své hodnoty:
 
 | Pole | Kde ho najdete |
 |---|---|
 | `account_id` | Přidejte — `npx wrangler whoami` |
-| `d1_databases[0].database_id` | `npx wrangler d1 create bee-champs-db` (viz krok 3) |
-| `kv_namespaces[0].id` | `npx wrangler kv namespace create SESSION` (viz krok 3) |
+| `d1_databases[0].database_id` | `npx wrangler d1 create bee-champs-db` |
+| `kv_namespaces[0].id` | `npx wrangler kv namespace create SESSION` |
 | `vars.APP_URL` | Vaše produkční URL |
 | `routes` | Přidejte sekci s vaší custom doménou (volitelné) |
 
@@ -39,80 +61,29 @@ Aby git netrackoval vaše lokální změny:
 git update-index --skip-worktree wrangler.jsonc
 ```
 
-## 2. Cloudflare účet a nástroje
-
-### Přihlášení přes Wrangler
+### 4. Nastavení secrets
 
 ```bash
-npx wrangler login
-```
-
-Otevře se prohlížeč, přihlaste se do Cloudflare a autorizujte Wrangler.
-
-## 3. Vytvoření D1 databáze a KV namespace
-
-```bash
-# Vytvořit D1 databázi
-npx wrangler d1 create bee-champs-db
-```
-
-Výstup ukáže `database_id` — vložte ho do `wrangler.jsonc` jako `d1_databases[0].database_id`.
-
-```bash
-# Vytvořit KV namespace pro sessions
-npx wrangler kv namespace create SESSION
-```
-
-Výstup ukáže `id` — vložte ho do `wrangler.jsonc` jako `kv_namespaces[0].id`.
-
-```bash
-# Spustit migrace na produkci
-npx wrangler d1 migrations apply bee-champs-db --remote
-```
-
-Toto vytvoří tabulky v produkční D1 databázi.
-
-## 4. Nastavení secrets
-
-Secrets se nastaví přes CLI — NIKDY je nedávejte do kódu nebo wrangler.jsonc:
-
-```bash
-# Admin přihlašovací token (libovolný bezpečný řetězec)
 npx wrangler secret put ADMIN_TOKEN
-
-# Superadmin přihlašovací token
 npx wrangler secret put SUPERADMIN_TOKEN
-
-# Resend API klíč pro odesílání emailů (https://resend.com)
 npx wrangler secret put RESEND_API_KEY
-
-# Cloudflare API token (pro superadmin nástroje — logy, export DB, cache purge)
 npx wrangler secret put CF_API_TOKEN
 ```
 
-Každý příkaz vás vyzve k zadání hodnoty.
-
-### Jak získat tokeny
-
-- **ADMIN_TOKEN / SUPERADMIN_TOKEN**: Vygenerujte náhodný řetězec, např. `openssl rand -hex 32`
-- **RESEND_API_KEY**: Zaregistrujte se na [resend.com](https://resend.com), vytvořte API klíč
-- **CF_API_TOKEN**: V Cloudflare dashboard > My Profile > API Tokens > Create Token. Potřebuje oprávnění: `Account > Workers Scripts > Edit`, `Account > D1 > Edit`
-
-## 5. Build a deploy
+### 5. Build a deploy
 
 ```bash
-# Z kořene repozitáře
 pnpm install
 pnpm run deploy
 ```
 
 Deploy script automaticky spustí build, aplikuje D1 migrace a nasadí worker.
 
-Po úspěšném deployi se v terminálu zobrazí URL workeru (např. `https://bee-champs-hub-web.UZIVATEL.workers.dev`).
-
 **Pozor:** `pnpm deploy` je rezervovaný příkaz pnpm — vždy používejte `pnpm run deploy`.
 
-## 6. Custom doména (volitelné)
+---
+
+## Custom doména (volitelné)
 
 Do `wrangler.jsonc` přidejte sekci `routes`:
 
@@ -122,15 +93,12 @@ Do `wrangler.jsonc` přidejte sekci `routes`:
 ]
 ```
 
-Podmínka: doména musí být přidaná v Cloudflare DNS (stačí Free plan). Po deploy se automaticky vytvoří DNS záznam.
+Doména musí být přidaná v Cloudflare DNS (stačí Free plan). Po deploy se automaticky vytvoří DNS záznam.
 
-## 7. Lokální vývoj
+## Lokální vývoj
 
 ```bash
-# Nainstalovat závislosti
 pnpm install
-
-# Spustit dev server (Astro + Wrangler)
 pnpm dev
 ```
 
@@ -149,7 +117,7 @@ CF_API_TOKEN=xxxxx
 
 Tento soubor je v `.gitignore` a používá se pouze lokálně.
 
-## 8. Databázové migrace
+## Databázové migrace
 
 Schéma je v `packages/db/src/schema/`. Pokud změníte schéma:
 
@@ -160,15 +128,15 @@ pnpm db:generate
 # Aplikovat lokálně
 npx wrangler d1 migrations apply bee-champs-db --local
 
-# Aplikovat na produkci
+# Aplikovat na produkci (automaticky součástí `pnpm run deploy`)
 npx wrangler d1 migrations apply bee-champs-db --remote
 ```
 
-## 9. Struktura projektu
+## Struktura projektu
 
 ```
 bee-champs/
-├── wrangler.jsonc          # Cloudflare konfigurace (placeholder v gitu, lokálně vaše hodnoty)
+├── wrangler.jsonc          # Cloudflare konfigurace
 ├── .dev.vars.example       # Šablona secrets
 ├── apps/
 │   └── web/              # Astro 5 + Svelte 5 + API (Effect TS)
@@ -187,9 +155,8 @@ bee-champs/
 └── docs/                 # Dokumentace
 ```
 
-## 10. Důležité URL
+## Důležité URL
 
-- **Produkční web**: URL z wrangler deploy nebo custom doména
 - **Admin panel**: `/admin` (chráněno tokenem)
 - **Superadmin**: `/superadmin` (chráněno tokenem)
 - **API health check**: `/api/health`
