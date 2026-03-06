@@ -21,7 +21,25 @@ Cloudflare Worker: bee-champs-hub-web
 
 Není žádný oddělený API worker — vše běží v jednom.
 
-## 1. Cloudflare účet a nástroje
+## 1. Konfigurace wrangler.jsonc
+
+Soubor `wrangler.jsonc` není v gitu (obsahuje citlivé ID). Zkopírujte šablonu:
+
+```bash
+cp wrangler.example.jsonc wrangler.jsonc
+```
+
+Poté vyplňte tyto hodnoty:
+
+| Pole | Kde ho najdete |
+|---|---|
+| `account_id` | `npx wrangler whoami` |
+| `d1_databases[0].database_id` | `npx wrangler d1 create bee-champs-db` (viz krok 3) |
+| `kv_namespaces[0].id` | `npx wrangler kv namespace create SESSION` (viz krok 3) |
+| `vars.APP_URL` | Vaše produkční URL |
+| `routes[0].pattern` | Vaše custom doména (volitelné) |
+
+## 2. Cloudflare účet a nástroje
 
 ### Přihlášení přes Wrangler
 
@@ -31,44 +49,24 @@ npx wrangler login
 
 Otevře se prohlížeč, přihlaste se do Cloudflare a autorizujte Wrangler.
 
-### Zjištění Account ID
+## 3. Vytvoření D1 databáze a KV namespace
 
 ```bash
-npx wrangler whoami
-```
-
-Account ID je v `wrangler.jsonc` — pokud deploujete na jiný účet, změňte `account_id`.
-
-## 2. Vytvoření D1 databáze
-
-```bash
+# Vytvořit D1 databázi
 npx wrangler d1 create bee-champs-db
 ```
 
-Výstup ukáže `database_id` — vložte ho do `wrangler.jsonc`:
-
-```jsonc
-"d1_databases": [
-  {
-    "binding": "DB",
-    "database_name": "bee-champs-db",
-    "database_id": "VASE-DATABASE-ID",
-    "migrations_dir": "packages/db/drizzle"
-  }
-]
-```
-
-### Vytvoření KV namespace (pro Astro sessions)
+Výstup ukáže `database_id` — vložte ho do `wrangler.jsonc` jako `d1_databases[0].database_id`.
 
 ```bash
+# Vytvořit KV namespace pro sessions
 npx wrangler kv namespace create SESSION
 ```
 
-Výstup ukáže `id` — vložte ho do `wrangler.jsonc` místo `SESSION_KV_ID`.
-
-### Spuštění migrace
+Výstup ukáže `id` — vložte ho do `wrangler.jsonc` jako `kv_namespaces[0].id`.
 
 ```bash
+# Spustit migrace na produkci
 npx wrangler d1 migrations apply bee-champs-db --remote
 ```
 
@@ -173,7 +171,8 @@ npx wrangler d1 migrations apply bee-champs-db --remote
 
 ```
 bee-champs/
-├── wrangler.jsonc          # Cloudflare konfigurace (kořen)
+├── wrangler.example.jsonc  # Šablona Cloudflare konfigurace
+├── wrangler.jsonc          # Vaše konfigurace (ne v gitu)
 ├── apps/
 │   └── web/              # Astro 5 + Svelte 5 + API (Effect TS)
 │       ├── src/

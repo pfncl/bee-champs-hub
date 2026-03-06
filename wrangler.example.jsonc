@@ -1,0 +1,47 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "bee-champs-hub-web",
+  "account_id": "VAS-ACCOUNT-ID",
+  "main": "apps/web/dist/_worker.js/index.js",
+  "compatibility_date": "2026-03-05",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./apps/web/dist"
+  },
+  "observability": {
+    "enabled": true
+  },
+
+  // Environment variables
+  "vars": {
+    "ENVIRONMENT": "production",
+    "APP_URL": "https://vase-domena.cz"
+  },
+
+  // Custom doména (volitelné)
+  "routes": [
+    { "pattern": "vase-domena.cz", "custom_domain": true }
+  ],
+
+  // KV namespace pro Astro sessions
+  "kv_namespaces": [
+    {
+      "binding": "SESSION",
+      "id": "VASE-KV-SESSION-ID"
+    }
+  ],
+
+  // D1 databáze
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "bee-champs-db",
+      "database_id": "VASE-D1-DATABASE-ID",
+      "migrations_dir": "packages/db/drizzle"
+    }
+  ]
+
+  // Secrets (nastavit přes `wrangler secret put`):
+  // ADMIN_TOKEN, SUPERADMIN_TOKEN, RESEND_API_KEY, CF_API_TOKEN
+}
