@@ -9,7 +9,7 @@
     "test": "pnpm -r test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "deploy": "pnpm --filter @bee-champs/web run build && wrangler deploy",
+    "deploy": "pnpm --filter @bee-champs/web run build && wrangler d1 migrations apply DB --remote && wrangler deploy",
     "db:generate": "pnpm --filter @bee-champs/db generate",
     "typecheck": "tsc -p apps/web/tsconfig.json --noEmit"
   },
@@ -22,6 +22,22 @@
       "esbuild",
       "workerd"
     ]
+  },
+  "cloudflare": {
+    "bindings": {
+      "ADMIN_TOKEN": {
+        "description": "Přihlašovací token pro admin panel. Vygenerujte: `openssl rand -hex 32`"
+      },
+      "SUPERADMIN_TOKEN": {
+        "description": "Přihlašovací token pro superadmin. Vygenerujte: `openssl rand -hex 32`"
+      },
+      "RESEND_API_KEY": {
+        "description": "API klíč z [resend.com](https://resend.com) pro odesílání emailů"
+      },
+      "CF_API_TOKEN": {
+        "description": "Cloudflare API token pro superadmin nástroje (logy, DB export). Vytvořte v [dashboard](https://dash.cloudflare.com/profile/api-tokens)"
+      }
+    }
   },
   "devDependencies": {
     "@codeforbreakfast/eslint-effect": "^0.8.5",

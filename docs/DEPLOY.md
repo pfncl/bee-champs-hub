@@ -23,21 +23,21 @@ Není žádný oddělený API worker — vše běží v jednom.
 
 ## 1. Konfigurace wrangler.jsonc
 
-Soubor `wrangler.jsonc` není v gitu (obsahuje citlivé ID). Zkopírujte šablonu:
-
-```bash
-cp wrangler.example.jsonc wrangler.jsonc
-```
-
-Poté vyplňte tyto hodnoty:
+Soubor `wrangler.jsonc` je v repu s placeholder hodnotami (pro Deploy to Cloudflare button). Pro lokální vývoj a produkci vyplňte své hodnoty:
 
 | Pole | Kde ho najdete |
 |---|---|
-| `account_id` | `npx wrangler whoami` |
+| `account_id` | Přidejte — `npx wrangler whoami` |
 | `d1_databases[0].database_id` | `npx wrangler d1 create bee-champs-db` (viz krok 3) |
 | `kv_namespaces[0].id` | `npx wrangler kv namespace create SESSION` (viz krok 3) |
 | `vars.APP_URL` | Vaše produkční URL |
-| `routes[0].pattern` | Vaše custom doména (volitelné) |
+| `routes` | Přidejte sekci s vaší custom doménou (volitelné) |
+
+Aby git netrackoval vaše lokální změny:
+
+```bash
+git update-index --skip-worktree wrangler.jsonc
+```
 
 ## 2. Cloudflare účet a nástroje
 
@@ -72,7 +72,7 @@ npx wrangler d1 migrations apply bee-champs-db --remote
 
 Toto vytvoří tabulky v produkční D1 databázi.
 
-## 3. Nastavení secrets
+## 4. Nastavení secrets
 
 Secrets se nastaví přes CLI — NIKDY je nedávejte do kódu nebo wrangler.jsonc:
 
@@ -98,7 +98,7 @@ Každý příkaz vás vyzve k zadání hodnoty.
 - **RESEND_API_KEY**: Zaregistrujte se na [resend.com](https://resend.com), vytvořte API klíč
 - **CF_API_TOKEN**: V Cloudflare dashboard > My Profile > API Tokens > Create Token. Potřebuje oprávnění: `Account > Workers Scripts > Edit`, `Account > D1 > Edit`
 
-## 4. Build a deploy
+## 5. Build a deploy
 
 ```bash
 # Z kořene repozitáře
@@ -106,18 +106,15 @@ pnpm install
 pnpm run deploy
 ```
 
-To je ekvivalent:
-```bash
-pnpm --filter @bee-champs/web build && wrangler deploy
-```
+Deploy script automaticky spustí build, aplikuje D1 migrace a nasadí worker.
 
 Po úspěšném deployi se v terminálu zobrazí URL workeru (např. `https://bee-champs-hub-web.UZIVATEL.workers.dev`).
 
 **Pozor:** `pnpm deploy` je rezervovaný příkaz pnpm — vždy používejte `pnpm run deploy`.
 
-## 5. Custom doména (volitelné)
+## 6. Custom doména (volitelné)
 
-V `wrangler.jsonc` je sekce `routes`:
+Do `wrangler.jsonc` přidejte sekci `routes`:
 
 ```jsonc
 "routes": [
@@ -127,7 +124,7 @@ V `wrangler.jsonc` je sekce `routes`:
 
 Podmínka: doména musí být přidaná v Cloudflare DNS (stačí Free plan). Po deploy se automaticky vytvoří DNS záznam.
 
-## 6. Lokální vývoj
+## 7. Lokální vývoj
 
 ```bash
 # Nainstalovat závislosti
@@ -141,7 +138,7 @@ Dev server běží na `http://localhost:4321`. Používá lokální D1 databázi
 
 ### Lokální secrets
 
-Vytvořte soubor `apps/web/.dev.vars`:
+Vytvořte soubor `apps/web/.dev.vars` (viz `.dev.vars.example`):
 
 ```
 ADMIN_TOKEN=test-admin-token
@@ -152,7 +149,7 @@ CF_API_TOKEN=xxxxx
 
 Tento soubor je v `.gitignore` a používá se pouze lokálně.
 
-## 7. Databázové migrace
+## 8. Databázové migrace
 
 Schéma je v `packages/db/src/schema/`. Pokud změníte schéma:
 
@@ -167,12 +164,12 @@ npx wrangler d1 migrations apply bee-champs-db --local
 npx wrangler d1 migrations apply bee-champs-db --remote
 ```
 
-## 8. Struktura projektu
+## 9. Struktura projektu
 
 ```
 bee-champs/
-├── wrangler.example.jsonc  # Šablona Cloudflare konfigurace
-├── wrangler.jsonc          # Vaše konfigurace (ne v gitu)
+├── wrangler.jsonc          # Cloudflare konfigurace (placeholder v gitu, lokálně vaše hodnoty)
+├── .dev.vars.example       # Šablona secrets
 ├── apps/
 │   └── web/              # Astro 5 + Svelte 5 + API (Effect TS)
 │       ├── src/
@@ -190,7 +187,7 @@ bee-champs/
 └── docs/                 # Dokumentace
 ```
 
-## 9. Důležité URL
+## 10. Důležité URL
 
 - **Produkční web**: URL z wrangler deploy nebo custom doména
 - **Admin panel**: `/admin` (chráněno tokenem)
