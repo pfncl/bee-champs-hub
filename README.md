@@ -1,6 +1,6 @@
 # Bee Champs Hub
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/pefen/bee-champs)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/pfncl/bee-champs-hub)
 
 Plánovací platforma pro mateřské a základní školy. Školy si vyberou z desítek ověřených programů (sport, vzdělávání, projektové dny, pobyty), sestaví si roční harmonogram a odešlou jednu souhrnnou poptávku.
 
@@ -45,7 +45,7 @@ pnpm dev
 pnpm build
 
 # Deploy na Cloudflare Workers
-pnpm deploy
+pnpm run deploy
 ```
 
 ## Deploy
@@ -53,7 +53,7 @@ pnpm deploy
 Jeden worker obsluhuje web i API. Podrobný návod viz [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ```bash
-pnpm deploy
+pnpm run deploy
 ```
 
 Po deploy je potřeba nastavit secrets: `ADMIN_TOKEN`, `SUPERADMIN_TOKEN`, `RESEND_API_KEY`, `CF_API_TOKEN`.
