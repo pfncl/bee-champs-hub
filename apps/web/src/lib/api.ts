@@ -1,5 +1,6 @@
 // API helper pro klientske volani (Svelte komponenty)
-export const API_BASE = import.meta.env.PUBLIC_API_URL ?? "https://bee-champs-hub-api.webmaster4329.workers.dev"
+// API endpointy jsou ted soucasti stejneho workeru pod /api/
+export const API_BASE = "/api"
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {

@@ -1,8 +1,9 @@
 // API helper pro serverove volani (Astro SSR)
-const API_BASE = import.meta.env.PUBLIC_API_URL ?? "https://bee-champs-hub-api.webmaster4329.workers.dev"
-
-export async function apiFetchSSR<T>(path: string, cookie?: string | null): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+// API endpointy jsou soucasti stejneho workeru — potrebujeme absolutni URL
+// Origin ziskame z Astro.url nebo z request headeru
+export async function apiFetchSSR<T>(path: string, cookie?: string | null, origin?: string): Promise<T> {
+  const base = origin ?? "http://localhost:4321"
+  const res = await fetch(`${base}${path}`, {
     headers: {
       "Content-Type": "application/json",
       ...(cookie ? { Cookie: cookie } : {}),

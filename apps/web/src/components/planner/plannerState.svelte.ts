@@ -22,8 +22,8 @@ function loadDataFromAPI() {
   loadPromise = (async () => {
     try {
       const [catRes, progRes] = await Promise.all([
-        fetch(`${API_BASE}/api/categories`),
-        fetch(`${API_BASE}/api/programs`),
+        fetch(`${API_BASE}/categories`),
+        fetch(`${API_BASE}/programs`),
       ])
       if (catRes.ok) {
         const catJson = await catRes.json() as { data: Category[] }

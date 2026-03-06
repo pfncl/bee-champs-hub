@@ -10,15 +10,17 @@ import type { Category } from '@bee-champs/shared';
 
 type Testimonial = { id: number; text: string; name: string; role: string; initials: string }
 
+const origin = Astro.url.origin;
+
 let categories: Category[] = [];
 let testimonials: Testimonial[] = [];
 let settings: Record<string, string> = {};
 
 try {
   const [catResult, testResult, settResult] = await Promise.allSettled([
-    apiFetchSSR<Category[]>("/api/categories"),
-    apiFetchSSR<Testimonial[]>("/api/testimonials"),
-    apiFetchSSR<Record<string, string>>("/api/settings/public"),
+    apiFetchSSR<Category[]>("/api/categories", null, origin),
+    apiFetchSSR<Testimonial[]>("/api/testimonials", null, origin),
+    apiFetchSSR<Record<string, string>>("/api/settings/public", null, origin),
   ]);
   if (catResult.status === "fulfilled") categories = catResult.value;
   if (testResult.status === "fulfilled") testimonials = testResult.value;

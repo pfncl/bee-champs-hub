@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { Button } from "flowbite-svelte"
   import { apiFetch } from "../../lib/api"
 
   type Inquiry = {
@@ -16,28 +15,59 @@
   let selectedId = $state<number | null>(null)
   let message = $state<string | null>(null)
   let messageType = $state<"success" | "error">("success")
+  let searchQuery = $state("")
+  let sortKey = $state<string | null>("date")
+  let sortDir = $state<"asc" | "desc">("desc")
 
   const selected = $derived(inquiries.find(i => i.id === selectedId))
   const authHeaders = { Authorization: `Bearer ${adminToken}` }
 
   const schoolTypeLabels: Record<string, string> = {
-    ms: "Mateřská škola",
-    zs: "Základní škola",
-    ss: "Střední škola",
-    other: "Jiné",
+    ms: "MŠ", zs: "ZŠ", ss: "SŠ", other: "Jiné",
   }
-
-  const gymLabels: Record<string, string> = { yes: "Ano, máme", no: "Nemáme", external: "Externí" }
-  const playgroundLabels: Record<string, string> = { yes: "Ano, máme", no: "Nemáme" }
+  const schoolTypeFullLabels: Record<string, string> = {
+    ms: "Mateřská škola", zs: "Základní škola", ss: "Střední škola", other: "Jiné",
+  }
+  const gymLabels: Record<string, string> = { yes: "Ano", no: "Ne", external: "Externí" }
+  const playgroundLabels: Record<string, string> = { yes: "Ano", no: "Ne" }
 
   function parsePrograms(json: string): { id: string; name: string; category: string; months: string[] }[] {
-    try { return JSON.parse(json) }
-    catch { return [] }
+    try { return JSON.parse(json) } catch { return [] }
   }
 
+  const filteredInquiries = $derived.by(() => {
+    let result = [...inquiries]
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(i =>
+        i.schoolName.toLowerCase().includes(q) ||
+        i.city.toLowerCase().includes(q) ||
+        i.contactName.toLowerCase().includes(q) ||
+        i.contactEmail.toLowerCase().includes(q)
+      )
+    }
+    if (sortKey) {
+      result.sort((a, b) => {
+        let aVal = "", bVal = ""
+        if (sortKey === "school") { aVal = a.schoolName; bVal = b.schoolName }
+        else if (sortKey === "type") { aVal = a.schoolType; bVal = b.schoolType }
+        else if (sortKey === "city") { aVal = a.city; bVal = b.city }
+        else if (sortKey === "contact") { aVal = a.contactName; bVal = b.contactName }
+        else if (sortKey === "date") { aVal = a.createdAt; bVal = b.createdAt }
+        else if (sortKey === "programs") {
+          const aP = parsePrograms(a.selectedPrograms).length
+          const bP = parsePrograms(b.selectedPrograms).length
+          return sortDir === "asc" ? aP - bP : bP - aP
+        }
+        const cmp = aVal.localeCompare(bVal, "cs")
+        return sortDir === "asc" ? cmp : -cmp
+      })
+    }
+    return result
+  })
+
   function showMessage(text: string, type: "success" | "error" = "success") {
-    message = text
-    messageType = type
+    message = text; messageType = type
     setTimeout(() => message = null, 3000)
   }
 
@@ -45,14 +75,16 @@
     return new Date(dateStr).toLocaleDateString("cs", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
   }
 
-  function timeAgo(dateStr: string): string {
-    const diff = Date.now() - new Date(dateStr).getTime()
-    const hours = Math.floor(diff / 3600000)
-    if (hours < 1) return "před chvílí"
-    if (hours < 24) return `před ${hours}h`
-    const days = Math.floor(hours / 24)
-    if (days < 7) return `před ${days}d`
-    return `před ${Math.floor(days / 7)} týd.`
+  function formatShortDate(dateStr: string): string {
+    return new Date(dateStr).toLocaleDateString("cs", { day: "numeric", month: "short", year: "numeric" })
+  }
+
+  function toggleSort(key: string) {
+    if (sortKey === key) {
+      sortDir = sortDir === "asc" ? "desc" : "asc"
+    } else {
+      sortKey = key; sortDir = key === "date" ? "desc" : "asc"
+    }
   }
 
   async function deleteInquiry(id: number) {
@@ -68,115 +100,127 @@
   }
 </script>
 
-<div>
-  <div class="flex items-center justify-between mb-6">
+{#snippet sortIcon(key: string)}
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none" class="shrink-0 {sortKey === key ? 'text-primary' : 'text-text-muted/30'}">
+    <path d="M8 3L11 6H5L8 3Z" fill="currentColor" class="{sortKey === key && sortDir === 'desc' ? 'opacity-30' : ''}"/>
+    <path d="M8 13L5 10H11L8 13Z" fill="currentColor" class="{sortKey === key && sortDir === 'asc' ? 'opacity-30' : ''}"/>
+  </svg>
+{/snippet}
+
+<div class="flex flex-col gap-6">
+  <!-- Page Header -->
+  <div class="flex items-start justify-between gap-4 flex-wrap">
     <div>
-      <h1 class="text-2xl font-bold text-text-dark font-heading">Poptávky</h1>
-      <p class="text-text-muted text-sm mt-1">Přijaté poptávky od škol ({inquiries.length})</p>
+      <h1 class="text-2xl font-bold text-text-dark font-heading leading-tight">Poptávky</h1>
+      <p class="text-sm text-text-muted mt-1">Přijaté poptávky od škol ({inquiries.length})</p>
     </div>
     {#if selected}
-      <Button color="alternative" size="sm" onclick={() => selectedId = null} class="rounded-lg!">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1.5"><path d="m15 18-6-6 6-6"/></svg>
+      <button onclick={() => selectedId = null} class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold border border-black/8 text-text-dark rounded-lg bg-white hover:bg-black/2 transition-all shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         Zpět na seznam
-      </Button>
+      </button>
     {/if}
   </div>
 
+  <!-- Toast -->
   {#if message}
-    <div class="mb-4 px-4 py-3 rounded-lg text-sm border {messageType === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'}">
+    <div class="px-4 py-3 rounded-lg text-sm font-medium {messageType === 'success' ? 'bg-green-500/10 text-green-700' : 'bg-red-500/10 text-red-700'}">
       {message}
     </div>
   {/if}
 
   {#if selected}
-    <!-- ==================== DETAIL POPTÁVKY ==================== -->
-    <div class="space-y-4">
-      <!-- Hlavička -->
-      <div class="bg-white rounded-xl border border-black/6 p-6">
-        <div class="flex items-start justify-between">
-          <div>
-            <div class="flex items-center gap-3 mb-1">
-              <h2 class="text-xl font-bold text-text-dark">{selected.schoolName}</h2>
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary">
-                {parsePrograms(selected.selectedPrograms).length} programů
-              </span>
+    <!-- DETAIL VIEW -->
+    <div class="flex flex-col gap-6">
+      <div class="bg-white rounded-xl border border-black/6 overflow-hidden">
+        <div class="px-6 py-5">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="flex items-center gap-3 mb-1.5">
+                <h2 class="text-xl font-bold text-text-dark">{selected.schoolName}</h2>
+                <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+                  {parsePrograms(selected.selectedPrograms).length} programů
+                </span>
+              </div>
+              <p class="text-sm text-text-muted">
+                {schoolTypeFullLabels[selected.schoolType] ?? selected.schoolType} · {selected.city} · {selected.childrenCount} dětí · {selected.ageRange}
+              </p>
+              <p class="text-xs text-text-muted/60 mt-1.5">{formatDate(selected.createdAt)}</p>
             </div>
-            <p class="text-text-muted text-sm">
-              {schoolTypeLabels[selected.schoolType] ?? selected.schoolType} · {selected.city} · {selected.childrenCount} dětí · {selected.ageRange}
-            </p>
-            <p class="text-text-muted/60 text-xs mt-1">{formatDate(selected.createdAt)}</p>
+            <button onclick={() => deleteInquiry(selected.id)} class="px-3 py-1.5 text-xs font-medium rounded-md border border-black/8 bg-white text-text-muted hover:text-red-600 hover:border-red-300 hover:bg-red-50 transition">
+              Smazat
+            </button>
           </div>
-          <button onclick={() => deleteInquiry(selected.id)} class="p-2 rounded-lg text-text-muted hover:text-cat-events hover:bg-cat-events/10 transition-colors" title="Smazat">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-          </button>
         </div>
       </div>
 
-      <div class="grid gap-4 lg:grid-cols-2">
-        <!-- Kontaktní osoba -->
-        <div class="bg-white rounded-xl border border-black/6 p-5">
-          <h3 class="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">Kontaktní osoba</h3>
-          <div class="space-y-3">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-sm">
+      <div class="grid gap-6 lg:grid-cols-2">
+        <div class="bg-white rounded-xl border border-black/6 overflow-hidden">
+          <div class="px-6 py-4 border-b border-black/6">
+            <h3 class="text-base font-semibold text-text-dark">Kontaktní osoba</h3>
+          </div>
+          <div class="p-6">
+            <div class="flex items-center gap-4 mb-5">
+              <div class="w-11 h-11 bg-primary rounded-full flex items-center justify-center text-bg-primary font-semibold text-sm shrink-0">
                 {selected.contactName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
               </div>
               <div>
-                <p class="font-semibold text-text-dark text-sm">{selected.contactName}</p>
+                <p class="font-semibold text-text-dark">{selected.contactName}</p>
                 {#if selected.contactPosition}
-                  <p class="text-text-muted text-xs">{selected.contactPosition}</p>
+                  <p class="text-text-muted text-sm">{selected.contactPosition}</p>
                 {/if}
               </div>
             </div>
-            <div class="flex flex-col gap-1.5 pl-13">
-              <a href="mailto:{selected.contactEmail}" class="inline-flex items-center gap-2 text-sm text-primary hover:underline">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            <div class="flex flex-col gap-3 pl-15">
+              <a href="mailto:{selected.contactEmail}" class="inline-flex items-center gap-2.5 text-sm text-primary hover:underline">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                 {selected.contactEmail}
               </a>
-              <a href="tel:{selected.contactPhone}" class="inline-flex items-center gap-2 text-sm text-primary hover:underline">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <a href="tel:{selected.contactPhone}" class="inline-flex items-center gap-2.5 text-sm text-primary hover:underline">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.88.37 1.74.7 2.55a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.81.33 1.67.57 2.55.7A2 2 0 0 1 22 16.92z"/></svg>
                 {selected.contactPhone}
               </a>
             </div>
           </div>
         </div>
 
-        <!-- Zázemí školy -->
-        <div class="bg-white rounded-xl border border-black/6 p-5">
-          <h3 class="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">Zázemí školy</h3>
-          <div class="grid grid-cols-2 gap-4">
+        <div class="bg-white rounded-xl border border-black/6 overflow-hidden">
+          <div class="px-6 py-4 border-b border-black/6">
+            <h3 class="text-base font-semibold text-text-dark">Zázemí školy</h3>
+          </div>
+          <div class="p-6 grid grid-cols-2 gap-5">
             <div>
-              <p class="text-text-muted text-xs mb-1">Tělocvična</p>
-              <p class="text-text-dark text-sm font-medium">{gymLabels[selected.hasGym ?? ""] ?? "Neuvedeno"}</p>
+              <p class="text-xs font-medium text-text-muted mb-1">Tělocvična</p>
+              <p class="text-sm font-semibold text-text-dark">{gymLabels[selected.hasGym ?? ""] ?? "Neuvedeno"}</p>
             </div>
             <div>
-              <p class="text-text-muted text-xs mb-1">Venkovní hřiště</p>
-              <p class="text-text-dark text-sm font-medium">{playgroundLabels[selected.hasPlayground ?? ""] ?? "Neuvedeno"}</p>
+              <p class="text-xs font-medium text-text-muted mb-1">Hřiště</p>
+              <p class="text-sm font-semibold text-text-dark">{playgroundLabels[selected.hasPlayground ?? ""] ?? "Neuvedeno"}</p>
             </div>
             <div>
-              <p class="text-text-muted text-xs mb-1">Počet dětí</p>
-              <p class="text-text-dark text-sm font-medium">{selected.childrenCount}</p>
+              <p class="text-xs font-medium text-text-muted mb-1">Počet dětí</p>
+              <p class="text-sm font-semibold text-text-dark">{selected.childrenCount}</p>
             </div>
             <div>
-              <p class="text-text-muted text-xs mb-1">Věkové rozmezí</p>
-              <p class="text-text-dark text-sm font-medium">{selected.ageRange}</p>
+              <p class="text-xs font-medium text-text-muted mb-1">Věk</p>
+              <p class="text-sm font-semibold text-text-dark">{selected.ageRange}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Vybrané programy -->
-      <div class="bg-white rounded-xl border border-black/6 p-5">
-        <h3 class="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">
-          Vybrané programy ({parsePrograms(selected.selectedPrograms).length})
-        </h3>
-        <div class="space-y-2">
+      <div class="bg-white rounded-xl border border-black/6 overflow-hidden">
+        <div class="px-6 py-4 border-b border-black/6 flex items-center justify-between">
+          <h3 class="text-base font-semibold text-text-dark">Vybrané programy</h3>
+          <span class="text-sm text-text-muted">{parsePrograms(selected.selectedPrograms).length} programů</span>
+        </div>
+        <div class="divide-y divide-black/6">
           {#each parsePrograms(selected.selectedPrograms) as program}
-            <div class="flex items-center justify-between px-4 py-2.5 bg-bg-warm/50 rounded-lg">
-              <span class="font-medium text-text-dark text-sm">{program.name}</span>
-              <div class="flex flex-wrap gap-1">
+            <div class="flex items-center justify-between px-6 py-4">
+              <span class="font-medium text-text-dark">{program.name}</span>
+              <div class="flex flex-wrap gap-2">
                 {#each program.months as month}
-                  <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-primary/10 text-primary">{month}</span>
+                  <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">{month}</span>
                 {/each}
               </div>
             </div>
@@ -184,65 +228,131 @@
         </div>
       </div>
 
-      <!-- Poznámky -->
       {#if selected.notes}
-        <div class="bg-white rounded-xl border border-black/6 p-5">
-          <h3 class="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Poznámky</h3>
-          <p class="text-text-dark text-sm leading-relaxed">{selected.notes}</p>
+        <div class="bg-white rounded-xl border border-black/6 overflow-hidden">
+          <div class="px-6 py-4 border-b border-black/6">
+            <h3 class="text-base font-semibold text-text-dark">Poznámky</h3>
+          </div>
+          <div class="p-6">
+            <p class="text-sm text-text-dark leading-relaxed">{selected.notes}</p>
+          </div>
         </div>
       {/if}
     </div>
 
   {:else}
-    <!-- ==================== SEZNAM POPTÁVEK ==================== -->
-    {#if inquiries.length === 0}
-      <div class="bg-white rounded-xl border border-black/6 p-12 text-center text-text-muted text-sm">
-        Žádné poptávky
+    <!-- TABLE VIEW -->
+    <div class="relative max-w-80">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted/50 pointer-events-none"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input
+        type="text"
+        placeholder="Hledat školy, města, kontakty..."
+        bind:value={searchQuery}
+        class="w-full py-2.5 pl-10 pr-4 text-sm border border-black/8 rounded-lg bg-white text-text-dark placeholder:text-text-muted/50 focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary/10 transition"
+      />
+    </div>
+
+    {#if filteredInquiries.length === 0}
+      <div class="bg-white rounded-xl border border-black/6 overflow-hidden">
+        <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
+          <div class="w-16 h-16 flex items-center justify-center mb-4 text-text-muted/30">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </div>
+          <p class="text-base font-semibold text-text-dark mb-1">Žádné poptávky</p>
+          <p class="text-sm text-text-muted">{searchQuery ? "Zkuste upravit vyhledávání" : "Poptávky od škol se zobrazí zde"}</p>
+        </div>
       </div>
     {:else}
-      <div class="space-y-3">
-        {#each inquiries as inq}
-          {@const progs = parsePrograms(inq.selectedPrograms)}
-          <div class="bg-white rounded-xl border border-black/6 p-5 hover:border-primary/20 transition-colors">
-            <div class="flex items-start justify-between gap-4">
-              <!-- Info -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                  <h3 class="font-bold text-text-dark">{inq.schoolName}</h3>
-                  <span class="text-text-muted/50 text-xs">{timeAgo(inq.createdAt)}</span>
-                </div>
-                <p class="text-text-muted text-sm mb-2">
-                  {schoolTypeLabels[inq.schoolType] ?? inq.schoolType} · {inq.city} · {inq.contactName}
-                  · <a href="mailto:{inq.contactEmail}" class="text-primary hover:underline" onclick={(e: MouseEvent) => e.stopPropagation()}>{inq.contactEmail}</a>
-                </p>
-                <!-- Programy -->
-                <div class="flex flex-wrap gap-1.5">
-                  {#each progs as program}
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/8 text-primary rounded-full text-[11px] font-medium">
-                      {program.name}
-                      <span class="opacity-50">({program.months.join(", ")})</span>
+      <div class="bg-white rounded-xl border border-black/6 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-black/6 bg-black/2">
+                <th class="text-left font-semibold text-text-dark whitespace-nowrap">
+                  <button onclick={() => toggleSort("school")} class="flex items-center gap-1.5 w-full px-4 py-3 hover:bg-black/3 transition">
+                    Škola
+                    {@render sortIcon("school")}
+                  </button>
+                </th>
+                <th class="text-left font-semibold text-text-dark whitespace-nowrap">
+                  <button onclick={() => toggleSort("type")} class="flex items-center gap-1.5 w-full px-4 py-3 hover:bg-black/3 transition">
+                    Typ
+                    {@render sortIcon("type")}
+                  </button>
+                </th>
+                <th class="text-left font-semibold text-text-dark whitespace-nowrap hidden md:table-cell">
+                  <button onclick={() => toggleSort("city")} class="flex items-center gap-1.5 w-full px-4 py-3 hover:bg-black/3 transition">
+                    Město
+                    {@render sortIcon("city")}
+                  </button>
+                </th>
+                <th class="text-left font-semibold text-text-dark whitespace-nowrap hidden lg:table-cell">
+                  <button onclick={() => toggleSort("contact")} class="flex items-center gap-1.5 w-full px-4 py-3 hover:bg-black/3 transition">
+                    Kontakt
+                    {@render sortIcon("contact")}
+                  </button>
+                </th>
+                <th class="text-left font-semibold text-text-dark whitespace-nowrap hidden md:table-cell">
+                  <button onclick={() => toggleSort("programs")} class="flex items-center gap-1.5 w-full px-4 py-3 hover:bg-black/3 transition">
+                    Programy
+                    {@render sortIcon("programs")}
+                  </button>
+                </th>
+                <th class="text-left font-semibold text-text-dark whitespace-nowrap">
+                  <button onclick={() => toggleSort("date")} class="flex items-center gap-1.5 w-full px-4 py-3 hover:bg-black/3 transition">
+                    Datum
+                    {@render sortIcon("date")}
+                  </button>
+                </th>
+                <th class="text-right font-semibold text-text-dark whitespace-nowrap px-4 py-3">
+                  Akce
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each filteredInquiries as inq}
+                {@const progs = parsePrograms(inq.selectedPrograms)}
+                <tr class="border-b border-black/6 last:border-b-0 hover:bg-black/1.5 transition">
+                  <td class="px-4 py-3.5">
+                    <span class="font-semibold text-text-dark">{inq.schoolName}</span>
+                  </td>
+                  <td class="px-4 py-3.5">
+                    <span class="inline-flex text-xs font-semibold px-2.5 py-1 rounded-full bg-black/5 text-text-muted">
+                      {schoolTypeLabels[inq.schoolType] ?? inq.schoolType}
                     </span>
-                  {/each}
-                </div>
-              </div>
-              <!-- Akce -->
-              <div class="flex items-center gap-1 shrink-0">
-                <button
-                  onclick={() => selectedId = inq.id}
-                  class="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                >
-                  Detail
-                </button>
-                <button
-                  onclick={() => deleteInquiry(inq.id)}
-                  class="p-1.5 rounded-lg text-text-muted hover:text-cat-events hover:bg-cat-events/10 transition-colors"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        {/each}
+                  </td>
+                  <td class="px-4 py-3.5 text-text-muted hidden md:table-cell">{inq.city}</td>
+                  <td class="px-4 py-3.5 hidden lg:table-cell">
+                    <div class="text-text-dark">{inq.contactName}</div>
+                    <div class="text-xs text-text-muted">{inq.contactEmail}</div>
+                  </td>
+                  <td class="px-4 py-3.5 hidden md:table-cell">
+                    <span class="inline-flex text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+                      {progs.length} prog.
+                    </span>
+                  </td>
+                  <td class="px-4 py-3.5 text-text-muted text-xs whitespace-nowrap">{formatShortDate(inq.createdAt)}</td>
+                  <td class="px-4 py-3.5 text-right">
+                    <div class="flex items-center justify-end gap-1">
+                      <button
+                        onclick={() => selectedId = inq.id}
+                        class="px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-bg-primary hover:bg-primary-hover transition"
+                      >
+                        Detail
+                      </button>
+                      <button
+                        onclick={() => deleteInquiry(inq.id)}
+                        class="px-3 py-1.5 text-xs font-medium rounded-md border border-black/8 bg-white text-text-muted hover:text-red-600 hover:border-red-300 hover:bg-red-50 transition"
+                      >
+                        Smazat
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
       </div>
     {/if}
   {/if}

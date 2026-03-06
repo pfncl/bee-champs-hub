@@ -5,6 +5,7 @@ import { apiFetchSSR } from '../../lib/api-server';
 
 const cookie = Astro.request.headers.get("cookie");
 const token = cookie?.match(/admin_token=([^;]+)/)?.[1] ?? "";
+const origin = Astro.url.origin;
 
 type Inquiry = {
   id: number; schoolName: string; schoolType: string; city: string;
@@ -17,10 +18,10 @@ type Inquiry = {
 let inquiries: Inquiry[] = []
 
 try {
-  inquiries = await apiFetchSSR<Inquiry[]>("/admin/inquiries", `admin_token=${token}`)
+  inquiries = await apiFetchSSR<Inquiry[]>("/api/admin/inquiries", `admin_token=${token}`, origin)
 } catch {}
 ---
 
-<AdminLayout title="Poptávky | Admin">
+<AdminLayout title="Poptávky | Admin" breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Poptávky" }]}>
   <AdminInquiries client:load initialInquiries={inquiries} adminToken={token} />
 </AdminLayout>

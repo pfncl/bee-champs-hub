@@ -129,7 +129,7 @@
       <textarea
         bind:value={purgeUrls}
         onfocus={resetStatus}
-        placeholder={"https://beechampshub.cz/\nhttps://bee-champs-hub-api.webmaster4329.workers.dev/api/programs"}
+        placeholder={"https://beechampshub.cz/\nhttps://beechampshub.cz/api/programs"}
         rows="5"
         class="w-full px-4 py-3 rounded-lg bg-bg-warm border border-black/6 text-text-dark font-mono text-xs placeholder-text-muted focus:outline-none focus:border-primary/50 resize-y mb-4"
       ></textarea>

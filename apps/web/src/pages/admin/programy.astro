@@ -5,6 +5,7 @@ import { apiFetchSSR } from '../../lib/api-server';
 
 const cookie = Astro.request.headers.get("cookie");
 const token = cookie?.match(/admin_token=([^;]+)/)?.[1] ?? "";
+const origin = Astro.url.origin;
 
 type Category = { id: number; slug: string; name: string; label: string; color: string }
 type Program = {
@@ -18,14 +19,14 @@ let programs: Program[] = []
 
 try {
   const [catResult, progResult] = await Promise.allSettled([
-    apiFetchSSR<Category[]>("/admin/categories", `admin_token=${token}`),
-    apiFetchSSR<Program[]>("/admin/programs", `admin_token=${token}`),
+    apiFetchSSR<Category[]>("/api/admin/categories", `admin_token=${token}`, origin),
+    apiFetchSSR<Program[]>("/api/admin/programs", `admin_token=${token}`, origin),
   ])
   if (catResult.status === "fulfilled") categories = catResult.value
   if (progResult.status === "fulfilled") programs = progResult.value
 } catch {}
 ---
 
-<AdminLayout title="Programy | Admin">
+<AdminLayout title="Programy | Admin" breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Programy" }]}>
   <AdminPrograms client:load initialPrograms={programs} categories={categories} adminToken={token} />
 </AdminLayout>

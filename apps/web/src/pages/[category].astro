@@ -7,14 +7,15 @@ import { apiFetchSSR } from '../lib/api-server';
 import { t } from '@i18n';
 
 const slug = Astro.params.category;
-const allCategories = await apiFetchSSR<Category[]>("/api/categories");
+const origin = Astro.url.origin;
+const allCategories = await apiFetchSSR<Category[]>("/api/categories", null, origin);
 const category = allCategories.find((c) => c.slug === slug);
 
 if (!category) {
   return Astro.redirect("/404");
 }
 
-const categoryPrograms = await apiFetchSSR<Program[]>(`/api/programs/${slug}`);
+const categoryPrograms = await apiFetchSSR<Program[]>(`/api/programs/${slug}`, null, origin);
 ---
 
 <Layout title={`${category.name} | Bee Champs Hub`} description={category.description}>

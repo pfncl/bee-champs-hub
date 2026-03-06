@@ -1,5 +1,7 @@
 # Bee Champs Hub
 
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/pefen/bee-champs)
+
 Plánovací platforma pro mateřské a základní školy. Školy si vyberou z desítek ověřených programů (sport, vzdělávání, projektové dny, pobyty), sestaví si roční harmonogram a odešlou jednu souhrnnou poptávku.
 
 ## Funkce
@@ -14,21 +16,20 @@ Plánovací platforma pro mateřské a základní školy. Školy si vyberou z de
 | Vrstva | Technologie |
 |---|---|
 | Frontend | Astro 5, Svelte 5, Tailwind CSS v4 |
-| API | Hono, Effect TS |
+| API | Astro server endpoints, Effect TS |
 | Databáze | Drizzle ORM, Cloudflare D1 (SQLite) |
-| Infrastruktura | Cloudflare Workers |
+| Infrastruktura | Cloudflare Workers (jeden worker) |
 | Monorepo | pnpm workspaces |
 
 ## Struktura projektu
 
 ```
 apps/
-  web/          Astro SSR frontend
-  api/          Hono API worker
+  web/          Astro SSR + API (jeden Cloudflare Worker)
 packages/
   shared/       Sdílené typy, kategorie, programy
-  db/           Drizzle ORM schéma
-docs/           Dokumentace a zadání
+  db/           Drizzle ORM schéma + migrace
+docs/           Dokumentace (DEPLOY.md, SPRINTY.md)
 ```
 
 ## Vývoj
@@ -49,8 +50,13 @@ pnpm deploy
 
 ## Deploy
 
-- **Web**: https://bee-champs-hub-web.webmaster4329.workers.dev
-- **API**: https://bee-champs-hub-api.webmaster4329.workers.dev
+Jeden worker obsluhuje web i API. Podrobný návod viz [docs/DEPLOY.md](docs/DEPLOY.md).
+
+```bash
+pnpm deploy
+```
+
+Po deploy je potřeba nastavit secrets: `ADMIN_TOKEN`, `SUPERADMIN_TOKEN`, `RESEND_API_KEY`, `CF_API_TOKEN`.
 
 ## Licence
 

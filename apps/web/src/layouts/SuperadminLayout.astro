@@ -168,7 +168,7 @@ function isActive(href: string): boolean {
         const logoutBtn = document.getElementById('sa-logout-btn')
         logoutBtn?.addEventListener('click', async () => {
           try {
-            await fetch((import.meta.env?.PUBLIC_API_URL ?? 'https://bee-champs-hub-api.webmaster4329.workers.dev') + '/superadmin/logout', {
+            await fetch('/api/superadmin/logout', {
               method: 'POST',
               credentials: 'include',
             })

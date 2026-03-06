@@ -11,7 +11,6 @@
 
   let isOpen = $state(true)
 
-  const API_URL = import.meta.env.PUBLIC_API_URL ?? "https://bee-champs-hub-api.webmaster4329.workers.dev"
 
   let schoolName = $state("")
   let schoolType = $state("")
@@ -107,7 +106,7 @@
     errorMessage = ""
 
     try {
-      const response = await fetch(`${API_URL}/inquiries`, {
+      const response = await fetch("/api/inquiries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
