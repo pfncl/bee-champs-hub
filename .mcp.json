@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "flowbite-svelte": {
-      "command": "node",
-      "args": ["/tmp/flowbite-svelte-mcp/build/server.js"]
-    }
-  }
-}
