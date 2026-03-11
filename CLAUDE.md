@@ -22,6 +22,30 @@ Planovaci platforma pro MS a ZS. Skoly si sestavi cely skolni rok — vyberou pr
 3. **NIKDY NEINSTALUJ BEZ OVERENI** — `pnpm view nazev dist-tags --json` nebo WebSearch pro latest verzi. VZDY pouzivej `pnpm`, NIKDY `npm`.
 4. **SKRIPTY** — viz `package.json` v koreni. NIKDY nevymyslej vlastni prikazy.
 
+## POVINNE PO KAZDE IMPLEMENTACI — AUDIT VLASTNI PRACE
+Po dokonceni kazde funkce / souboru / logicke celku **VZDY** proved:
+
+1. **TYPOVA KONTROLA** — `tsc -p apps/api/tsconfig.json --noEmit` (backend), `tsc -p apps/web/tsconfig.json --noEmit` (frontend). Oprav VSE co TypeScript hlasi — zadne `any` ani `@ts-ignore`.
+2. **PRECTI SVE ZMENY** — znovu projdi kazdy zmeneny soubor a zkontroluj:
+   - Dodrzeni Effect TS pravidel (zadny `async/await`, `throw`, `null`, `.pipe()` na instancich)
+   - Zadne zbytecne komentare, konzolove logy, debug artefakty
+   - Spravna ceska dokumentace u netrivalniho kodu
+3. **SPUST TESTY** — `pnpm test` (nebo cilenou sadu). Pokud test selze, OPRAV problem — NIKDY nepreskoč.
+4. **ZKONTROLUJ REGRESE** — pomysli, zda zmena neovlivnuje jine casti systemu (schemata, sdilene typy, API kontrakt).
+
+## PRUBEZNE COMMITY — POVINNY POSTUP
+- **Po kazdem logickem celku** (nova funkce, oprava bugy, refactoring) vytvor commit — NESHROMAZDUJ zmeny.
+- Commit message format: `<typ>(<rozsah>): <co a proc>` (napr. `feat(api): pridat endpoint pro poptavky`)
+- Typy: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `build`
+- **NIKDY** necommituj: `.env`, credentials, debug logy, rozbity TypeScript, selhavajici testy.
+- Vzdy pouzij `git add <konkretni soubory>` — NIKDY `git add -A` bez kontroly.
+
+## DOKUMENTOVANI KODU
+- Kazda netrivialni funkce / handler / service musi mit cesky komentar vysvetlujici **PROC** (ne jen co dela).
+- Slozite Effect pipeline — pridej radkovy komentar ke kazdemu kroku.
+- Nove DB migrace — komentar v souboru popisujici duvod zmeny schematu.
+- Nove API endpointy — aktualizuj nebo vytvor prislusnou sekci v `docs/`.
+
 ## Striktni Effect TS pravidla
 Viz [EFFECT_STRICT_RULES.md](./EFFECT_STRICT_RULES.md) — VZDY dodrzuj:
 

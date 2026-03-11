@@ -16,12 +16,10 @@ const navIcons: Record<string, string> = {
 <header class="fixed flex items-center justify-center w-full z-50 bg-bg-primary/97 backdrop-blur-sm border-b border-border-primary h-[68px]">
   <nav class="max-w-7xl w-full px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between">
-      <!-- Logo -->
-      <a href="/" class="flex items-center gap-2 shrink-0">
-        <div class="bg-primary p-2 rounded-xl transition-transform duration-300">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-bg-primary fill-current"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
-        </div>
-        <span class="text-xl font-bold font-heading text-white hidden sm:inline">
+      <!-- Logo dle logomanuálu — geometrická včela s korunou + logotyp -->
+      <a href="/" class="flex items-center gap-3 shrink-0">
+        <img src="/logo.svg" alt="Bee Champs" width="36" height="38" class="shrink-0" />
+        <span class="text-xl font-bold font-heading text-white hidden sm:inline tracking-wide uppercase">
           Bee Champs <span class="text-primary">Hub</span>
         </span>
       </a>
@@ -83,10 +81,8 @@ const navIcons: Record<string, string> = {
   <!-- Hlavicka panelu -->
   <div class="flex items-center justify-between border-b border-border-primary px-4 py-4">
     <a href="/" class="flex items-center gap-2">
-      <div class="bg-primary p-1.5 rounded-lg">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-bg-primary fill-current"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
-      </div>
-      <span class="text-sm font-bold font-heading text-white">Bee Champs <span class="text-primary">Hub</span></span>
+      <img src="/logo.svg" alt="Bee Champs" width="28" height="30" class="shrink-0" />
+      <span class="text-sm font-bold font-heading text-white tracking-wide uppercase">Bee Champs <span class="text-primary">Hub</span></span>
     </a>
     <button id="mobile-close-btn" class="rounded-lg p-1.5 text-text-secondary hover:text-white transition-colors" aria-label="Zavřít">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
